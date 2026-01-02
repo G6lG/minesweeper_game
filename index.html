@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сапёр с Динамической Бомбой | Игра запускается!</title>
+    <title>Сапёр с Динамическими Бомбами PRO | Визуальное обновление</title>
     <style>
-        /* ВАЖНО: Весь CSS остаётся БЕЗ ИЗМЕНЕНИЙ из предыдущего кода */
+        /* ОСНОВНЫЕ СТИЛИ С УЛУЧШЕНИЯМИ */
         :root {
+            /* Светлая тема (по умолчанию) */
             --primary-bg: linear-gradient(135deg, #e0e5ec 0%, #f0f5fa 100%);
-            --cell-size: 35px;
+            --cell-size: 38px;
             --cell-margin: 3px;
-            --cell-radius: 10px;
+            --cell-radius: 12px;
             --shadow-light: #ffffff;
             --shadow-dark: #a3b1c6;
+            
+            /* Цвета чисел */
             --number-1: #3498db;
             --number-2: #27ae60;
             --number-3: #e74c3c;
@@ -21,20 +24,40 @@
             --number-6: #1abc9c;
             --number-7: #34495e;
             --number-8: #7f8c8d;
+            
+            /* Игровые цвета */
             --bomb-color: #e74c3c;
             --flag-color: #e74c3c;
             --question-color: #f39c12;
-            --ui-bg: rgba(224, 229, 236, 0.9);
-            --ui-radius: 15px;
+            --dynamic-bomb-start: #ff9f43;
+            --dynamic-bomb-end: #ff6b6b;
+            --ui-bg: rgba(224, 229, 236, 0.95);
+            --ui-radius: 18px;
             --ui-shadow: 8px 8px 16px #a3b1c6, -8px -8px 16px #ffffff;
             --ui-inset-shadow: inset 3px 3px 7px #a3b1c6, inset -3px -3px 7px #ffffff;
-            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* Новые переменные для анимаций */
+            --reveal-duration: 0.4s;
+            --bomb-pulse: 1.5s;
+        }
+
+        /* Темная тема */
+        [data-theme="dark"] {
+            --primary-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --shadow-light: #2d3746;
+            --shadow-dark: #0a0a0f;
+            --ui-bg: rgba(26, 32, 44, 0.95);
+            --cell-bg: linear-gradient(145deg, #2d3746, #252e3d);
+            --ui-shadow: 8px 8px 16px #0a0a0f, -8px -8px 16px #2d3746;
+            --ui-inset-shadow: inset 3px 3px 7px #0a0a0f, inset -3px -3px 7px #2d3746;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         body {
@@ -46,109 +69,195 @@
             flex-direction: column;
             align-items: center;
             padding: 20px;
-            line-height: 1.5;
+            line-height: 1.6;
+            overflow-x: hidden;
         }
 
+        [data-theme="dark"] body {
+            color: #e2e8f0;
+        }
+
+        /* ТЕМАТИЧЕСКИЕ ГРАДИЕНТЫ ДЛЯ РЕЖИМОВ */
+        .mode-classic .cell.dynamic-bomb {
+            background: linear-gradient(145deg, var(--dynamic-bomb-start), var(--dynamic-bomb-end));
+        }
+
+        .mode-chaos .cell.dynamic-bomb {
+            background: linear-gradient(145deg, #ff00ff, #00ffff);
+            animation: chaos-pulse 1.2s infinite;
+        }
+
+        .mode-apocalypse .cell.dynamic-bomb {
+            background: linear-gradient(145deg, #ff0000, #ff8c00);
+            animation: apocalypse-pulse 1s infinite;
+        }
+
+        /* АНИМАЦИИ */
+        @keyframes cell-reveal {
+            0% { 
+                transform: scale(0.8); 
+                opacity: 0;
+                box-shadow: inset 0 0 0 rgba(163, 177, 198, 0);
+            }
+            50% { 
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+            100% { 
+                transform: scale(1); 
+                opacity: 1;
+            }
+        }
+
+        @keyframes bomb-pulse {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg);
+                box-shadow: 0 0 10px rgba(255, 159, 67, 0.5);
+            }
+            25% { 
+                transform: scale(1.05) rotate(90deg);
+                box-shadow: 0 0 20px rgba(255, 159, 67, 0.8);
+            }
+            50% { 
+                transform: scale(1.1) rotate(180deg);
+                box-shadow: 0 0 30px rgba(255, 159, 67, 1);
+            }
+            75% { 
+                transform: scale(1.05) rotate(270deg);
+                box-shadow: 0 0 20px rgba(255, 159, 67, 0.8);
+            }
+        }
+
+        @keyframes chaos-pulse {
+            0%, 100% { 
+                filter: hue-rotate(0deg);
+                transform: scale(1);
+            }
+            50% { 
+                filter: hue-rotate(180deg);
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes apocalypse-pulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+            }
+            50% { 
+                transform: scale(1.15);
+                box-shadow: 0 0 30px rgba(255, 0, 0, 1);
+            }
+        }
+
+        @keyframes number-pop {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes flag-wave {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-3px) rotate(5deg); }
+            75% { transform: translateY(3px) rotate(-5deg); }
+        }
+
+        @keyframes explosion {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(4); opacity: 0; }
+        }
+
+        @keyframes victory {
+            0% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(5deg); }
+            50% { transform: translateY(0px) rotate(0deg); }
+            75% { transform: translateY(-5px) rotate(-5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        /* ОСНОВНОЙ КОНТЕЙНЕР */
         .container {
             width: 100%;
-            max-width: 1400px;
+            max-width: 1600px;
             display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 30px;
+            grid-template-columns: 1fr 400px;
+            gap: 40px;
             margin-top: 20px;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .header {
             grid-column: 1 / -1;
             text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
             border-bottom: 2px solid rgba(163, 177, 198, 0.3);
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #2c3e50, #3498db);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .header .subtitle {
-            font-size: 1.1rem;
-            color: #7f8c8d;
-            font-weight: 500;
-        }
-
-        .game-area {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .top-panel {
-            background: var(--ui-bg);
-            border-radius: var(--ui-radius);
-            box-shadow: var(--ui-shadow);
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .display {
-            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
-            border-radius: 12px;
-            padding: 15px 25px;
-            box-shadow: var(--ui-inset-shadow);
-            display: flex;
-            gap: 30px;
-        }
-
-        .display-item {
-            text-align: center;
-        }
-
-        .display-label {
-            font-size: 0.9rem;
-            color: #7f8c8d;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-
-        .display-value {
-            font-size: 2rem;
-            font-weight: 700;
-            font-family: 'Courier New', monospace;
-            color: #2c3e50;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        .game-controls {
-            display: flex;
-            gap: 15px;
-        }
-
-        .game-board-container {
-            background: var(--ui-bg);
-            border-radius: var(--ui-radius);
-            box-shadow: var(--ui-shadow);
-            padding: 25px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 500px;
             position: relative;
         }
 
+        [data-theme="dark"] .header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #3498db, #9b59b6, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: gradient-shift 3s ease-in-out infinite;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .theme-toggle {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--ui-bg);
+            border-radius: 50px;
+            padding: 10px 20px;
+            box-shadow: var(--ui-shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        /* ИГРОВОЕ ПОЛЕ */
         .game-board {
             display: inline-grid;
             gap: var(--cell-margin);
             background: rgba(163, 177, 198, 0.3);
-            padding: 15px;
-            border-radius: calc(var(--cell-radius) + 5px);
-            box-shadow: inset 2px 2px 5px #a3b1c6, inset -2px -2px 5px #ffffff;
+            padding: 20px;
+            border-radius: calc(var(--cell-radius) + 10px);
+            box-shadow: 
+                inset 2px 2px 5px var(--shadow-dark),
+                inset -2px -2px 5px var(--shadow-light),
+                0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .game-board {
+            background: rgba(255, 255, 255, 0.05);
         }
 
         .cell {
@@ -158,74 +267,74 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 1.1rem;
+            font-weight: 800;
+            font-size: 1.3rem;
             cursor: pointer;
             user-select: none;
             transition: var(--transition);
             background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
-            box-shadow: 4px 4px 8px #a3b1c6, -4px -4px 8px #ffffff;
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
             position: relative;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .cell {
+            background: linear-gradient(145deg, #2d3746, #252e3d);
+        }
+
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, 
+                transparent 30%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                transparent 70%);
+            transform: translateX(-100%);
+        }
+
+        .cell:hover::before {
+            animation: shine 0.6s ease-out;
+        }
+
+        @keyframes shine {
+            to { transform: translateX(100%); }
         }
 
         .cell:hover {
-            transform: translateY(-2px);
-            box-shadow: 6px 6px 12px #a3b1c6, -6px -6px 12px #ffffff;
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
         }
 
         .cell:active {
-            transform: translateY(0);
-            box-shadow: inset 2px 2px 4px #a3b1c6, inset -2px -2px 4px #ffffff;
+            transform: translateY(0) scale(0.98);
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
         }
 
         .cell.revealed {
             background: linear-gradient(145deg, #d1d9e6, #e6ebf4);
-            box-shadow: inset 3px 3px 6px #a3b1c6, inset -3px -3px 6px #ffffff;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
             cursor: default;
+            animation: cell-reveal var(--reveal-duration) cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        [data-theme="dark"] .cell.revealed {
+            background: linear-gradient(145deg, #252e3d, #2d3746);
         }
 
         .cell.revealed:hover {
             transform: none;
-            box-shadow: inset 3px 3px 6px #a3b1c6, inset -3px -3px 6px #ffffff;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
         }
 
-        .cell.mine {
-            background: linear-gradient(145deg, #ff6b6b, #ee5a52);
-        }
-
-        .cell.mine::before {
-            content: '💣';
-            font-size: 0.9rem;
-        }
-
-        .cell.flagged::before {
-            content: '🚩';
-            font-size: 0.9rem;
-            color: var(--flag-color);
-        }
-
-        .cell.question::before {
-            content: '?';
-            color: var(--question-color);
-            font-size: 1.2rem;
-            font-weight: 800;
-        }
-
-        .cell.dynamic-bomb {
-            animation: pulse 2s infinite;
-            background: linear-gradient(145deg, #ff9f43, #ff8a00);
-        }
-
-        .cell.dynamic-bomb::before {
-            content: '⏣';
-            font-size: 1.1rem;
-            font-weight: 800;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        /* ЧИСЛА С АНИМАЦИЯМИ */
+        .cell.number-1, .cell.number-2, .cell.number-3,
+        .cell.number-4, .cell.number-5, .cell.number-6,
+        .cell.number-7, .cell.number-8 {
+            animation: number-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .cell.number-1 { color: var(--number-1); }
@@ -237,130 +346,188 @@
         .cell.number-7 { color: var(--number-7); }
         .cell.number-8 { color: var(--number-8); }
 
+        /* БОМБЫ */
+        .cell.mine {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a52);
+        }
+
+        .cell.mine::before {
+            content: '💣';
+            font-size: 1.1rem;
+            animation: bomb-pulse var(--bomb-pulse) infinite;
+        }
+
+        .cell.dynamic-bomb {
+            animation: bomb-pulse var(--bomb-pulse) infinite;
+            z-index: 2;
+        }
+
+        .cell.dynamic-bomb::before {
+            content: '💣';
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        /* ФЛАГИ И ВОПРОСЫ */
+        .cell.flagged::before {
+            content: '🚩';
+            font-size: 1.1rem;
+            color: var(--flag-color);
+            animation: flag-wave 1s ease-in-out infinite;
+        }
+
+        .cell.question::before {
+            content: '?';
+            color: var(--question-color);
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+        /* ЭФФЕКТЫ */
+        .wave-effect {
+            position: absolute;
+            border: 3px solid currentColor;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: wave 0.6s ease-out;
+        }
+
+        @keyframes wave {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        .explosion {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #ff9f43 0%, #ff6b6b 50%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: explosion 0.8s ease-out;
+            z-index: 100;
+        }
+
+        /* РЕЖИМЫ ИГРЫ */
+        .mode-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .mode-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: var(--ui-bg);
+            box-shadow: var(--ui-shadow);
+            color: #5d6d7e;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        [data-theme="dark"] .mode-btn {
+            color: #cbd5e0;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light);
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .mode-btn .mode-icon {
+            font-size: 1.5rem;
+        }
+
+        /* САЙДБАР И ПАНЕЛИ */
         .sidebar {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 25px;
         }
 
         .panel {
             background: var(--ui-bg);
             border-radius: var(--ui-radius);
             box-shadow: var(--ui-shadow);
-            padding: 25px;
+            padding: 30px;
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         .panel-title {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             color: #2c3e50;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(163, 177, 198, 0.3);
         }
 
-        .panel-title i {
-            color: #3498db;
+        [data-theme="dark"] .panel-title {
+            color: #e2e8f0;
+            border-bottom-color: rgba(255, 255, 255, 0.1);
         }
 
-        .settings-grid {
-            display: grid;
-            gap: 15px;
-        }
-
-        .setting-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .setting-label {
-            font-size: 0.95rem;
-            color: #5d6d7e;
-            font-weight: 600;
-        }
-
-        input[type="number"], input[type="text"], select {
-            padding: 12px 15px;
-            border: none;
-            border-radius: 10px;
+        /* ДИСПЛЕЙ */
+        .display {
             background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
+            border-radius: 15px;
+            padding: 20px 30px;
             box-shadow: var(--ui-inset-shadow);
-            font-family: inherit;
-            font-size: 1rem;
+            display: flex;
+            gap: 40px;
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        [data-theme="dark"] .display {
+            background: linear-gradient(145deg, #2d3746, #252e3d);
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .display-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            font-family: 'Courier New', monospace;
             color: #2c3e50;
-            transition: var(--transition);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            min-width: 80px;
         }
 
-        input[type="number"]:focus, input[type="text"]:focus, select:focus {
-            outline: none;
-            box-shadow: inset 2px 2px 5px #a3b1c6, inset -2px -2px 5px #ffffff,
-                        0 0 0 2px rgba(52, 152, 219, 0.3);
+        [data-theme="dark"] .display-value {
+            color: #e2e8f0;
         }
 
-        .range-with-value {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        input[type="range"] {
-            flex: 1;
-            height: 6px;
-            border-radius: 3px;
-            background: linear-gradient(to right, #3498db, #2ecc71);
-            -webkit-appearance: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #2c3e50;
-            cursor: pointer;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 5px;
-        }
-
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            border-radius: 5px;
-            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
-            box-shadow: var(--ui-inset-shadow);
-            appearance: none;
-            cursor: pointer;
-            position: relative;
-        }
-
-        input[type="checkbox"]:checked {
-            background: #3498db;
-        }
-
-        input[type="checkbox"]:checked::after {
-            content: '✓';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-weight: bold;
-        }
-
+        /* КНОПКИ */
         .btn {
-            padding: 14px 20px;
+            padding: 16px 24px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
-            box-shadow: 5px 5px 10px #a3b1c6, -5px -5px 10px #ffffff;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
             font-family: inherit;
             font-size: 1rem;
             font-weight: 600;
@@ -370,23 +537,44 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .btn {
+            background: linear-gradient(145deg, #2d3746, #252e3d);
+            color: #e2e8f0;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 8px 8px 16px #a3b1c6, -8px -8px 16px #ffffff;
+            transform: translateY(-3px);
+            box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light);
         }
 
         .btn:active {
             transform: translateY(0);
-            box-shadow: inset 3px 3px 6px #a3b1c6, inset -3px -3px 6px #ffffff;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
         }
 
         .btn-primary {
             background: linear-gradient(135deg, #3498db, #2980b9);
             color: white;
-            box-shadow: 5px 5px 10px #a3b1c6, -5px -5px 10px #ffffff;
         }
 
         .btn-success {
@@ -399,212 +587,79 @@
             color: white;
         }
 
-        .btn-group {
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        /* АЧИВКИ */
+        .achievements-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .history-panel {
-            height: 250px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .history-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
-            border-radius: 10px;
-            box-shadow: var(--ui-inset-shadow);
-            margin-bottom: 15px;
-        }
-
-        .history-item {
-            padding: 10px;
-            margin-bottom: 8px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 8px;
-            font-size: 0.9rem;
-            color: #5d6d7e;
-            border-left: 4px solid #3498db;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .history-item.flag { border-left-color: #e74c3c; }
-        .history-item.question { border-left-color: #f39c12; }
-        .history-item.bomb { border-left-color: #ff9f43; }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
             gap: 15px;
-            margin-bottom: 20px;
+            margin-top: 20px;
         }
 
-        .stat-item {
-            text-align: center;
-            padding: 15px;
+        .achievement {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
             background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
-            border-radius: 10px;
-            box-shadow: var(--ui-inset-shadow);
+            box-shadow: var(--ui-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
         }
 
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 5px;
+        .achievement:hover {
+            transform: scale(1.1);
         }
 
-        .stat-label {
-            font-size: 0.85rem;
-            color: #7f8c8d;
-            font-weight: 600;
+        .achievement.locked {
+            opacity: 0.5;
+            filter: grayscale(1);
         }
 
-        .modal {
-            display: none;
+        .achievement.unlocked {
+            animation: victory 0.5s ease;
+        }
+
+        /* ПОБЕДА */
+        .victory-effect {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            pointer-events: none;
             z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
+            opacity: 0;
         }
 
-        .modal.active {
-            display: flex;
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--confetti-color);
+            animation: confetti-fall linear forwards;
         }
 
-        .modal-content {
-            background: var(--ui-bg);
-            border-radius: var(--ui-radius);
-            box-shadow: var(--ui-shadow);
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
         }
 
-        .modal-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: #2c3e50;
-        }
-
-        .tab-buttons {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 25px;
-            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
-            border-radius: 10px;
-            padding: 5px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #7f8c8d;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .tab-btn.active {
-            background: white;
-            color: #2c3e50;
-            box-shadow: 3px 3px 6px #a3b1c6, -3px -3px 6px #ffffff;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .leaderboard {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        .leaderboard th {
-            background: linear-gradient(145deg, #d1d9e6, #e6ebf4);
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            color: #5d6d7e;
-            border-bottom: 2px solid rgba(163, 177, 198, 0.3);
-        }
-
-        .leaderboard td {
-            padding: 12px;
-            border-bottom: 1px solid rgba(163, 177, 198, 0.3);
-        }
-
-        .leaderboard tr:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
-
-        .editor-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .tool-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
-            box-shadow: 3px 3px 6px #a3b1c6, -3px -3px 6px #ffffff;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            color: #5d6d7e;
-        }
-
-        .tool-btn.active {
-            background: #3498db;
-            color: white;
-            box-shadow: 3px 3px 6px #a3b1c6;
-        }
-
-        .editor-status {
-            padding: 15px;
-            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
-            border-radius: 10px;
-            box-shadow: var(--ui-inset-shadow);
-            margin-top: 15px;
-            font-size: 0.9rem;
-            color: #5d6d7e;
-        }
-
+        /* АДАПТИВНОСТЬ */
         @media (max-width: 1200px) {
             .container {
                 grid-template-columns: 1fr;
-                max-width: 800px;
+                max-width: 900px;
             }
             
             .sidebar {
@@ -614,239 +669,225 @@
 
         @media (max-width: 768px) {
             .cell {
-                width: 30px;
-                height: 30px;
-                font-size: 1rem;
+                width: 32px;
+                height: 32px;
+                font-size: 1.1rem;
             }
             
-            .game-board-container {
-                padding: 15px;
+            .header h1 {
+                font-size: 2.2rem;
             }
             
-            .panel {
-                padding: 20px;
+            .display {
+                flex-direction: column;
+                gap: 20px;
+                align-items: center;
             }
             
-            .btn-group {
-                grid-template-columns: 1fr;
+            .mode-selector {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
         @media (max-width: 480px) {
             .cell {
-                width: 25px;
-                height: 25px;
-                font-size: 0.9rem;
+                width: 28px;
+                height: 28px;
+                font-size: 1rem;
             }
             
-            .display {
-                flex-direction: column;
-                gap: 15px;
-                align-items: center;
+            .panel {
+                padding: 20px;
             }
-            
-            .game-controls {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
-
-        .context-menu {
-            position: absolute;
-            background: var(--ui-bg);
-            border-radius: var(--ui-radius);
-            box-shadow: var(--ui-shadow);
-            padding: 10px;
-            display: none;
-            z-index: 100;
-        }
-
-        .context-menu.active {
-            display: block;
-        }
-
-        .context-menu-item {
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #5d6d7e;
-        }
-
-        .context-menu-item:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
-
-        @keyframes wave {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(3); opacity: 0; }
-        }
-
-        .wave-effect {
-            position: absolute;
-            border: 2px solid #ff9f43;
-            border-radius: 50%;
-            pointer-events: none;
-            animation: wave 0.5s ease-out;
-        }
-
-        /* ДОБАВЛЕНО: Стиль для начального экрана */
-        .start-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-            gap: 20px;
-        }
-
-        .start-screen h2 {
-            color: #2c3e50;
-            font-size: 2rem;
-            margin-bottom: 10px;
-        }
-
-        .start-screen p {
-            color: #7f8c8d;
-            max-width: 400px;
-            line-height: 1.6;
-        }
-
-        .start-screen .btn {
-            margin-top: 20px;
-        }
-
-        /* ДОБАВЛЕНО: Стиль для выделения выбранной клетки */
-        .cell.selected {
-            box-shadow: 0 0 0 3px #3498db !important;
-            z-index: 10;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>⚡ Сапёр с Динамической Бомбой</h1>
-        <p class="subtitle">Игра запускается сразу! Нажмите "Начать игру"</p>
+        <h1>💥 Сапёр с Динамическими Бомбами PRO</h1>
+        <p class="subtitle">Визуальное обновление • 3 режима • Улучшенная генерация • Ачивки</p>
+        <div class="theme-toggle" id="theme-toggle">
+            <span>🌙</span>
+            <span>Темная тема</span>
+        </div>
     </div>
 
     <div class="container">
         <div class="game-area">
+            <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
             <div class="top-panel">
                 <div class="display">
                     <div class="display-item">
                         <div class="display-label">Мин осталось</div>
-                        <div class="display-value" id="mine-count">10</div>
+                        <div class="display-value" id="mine-count">010</div>
                     </div>
                     <div class="display-item">
                         <div class="display-label">Время</div>
                         <div class="display-value" id="timer">000</div>
                     </div>
                     <div class="display-item">
+                        <div class="display-label">Бомб активных</div>
+                        <div class="display-value" id="bomb-count">3</div>
+                    </div>
+                    <div class="display-item">
                         <div class="display-label">След. перемещение</div>
-                        <div class="display-value" id="bomb-timer">15</div>
+                        <div class="display-value" id="bomb-timer">12</div>
                     </div>
                 </div>
                 
                 <div class="game-controls">
-                    <button class="btn" id="undo-btn" title="Ctrl+Z">
-                        <span>↶</span> Отмена
+                    <button class="btn btn-warning" id="undo-btn" title="Ctrl+Z">
+                        <span>↶</span> Отмена хода
+                    </button>
+                    <button class="btn btn-danger" id="hint-btn">
+                        <span>💡</span> Подсказка
                     </button>
                     <button class="btn btn-primary" id="restart-btn">
                         <span>🔄</span> Новая игра
                     </button>
-                    <button class="btn" id="editor-btn">
-                        <span>✏️</span> Редактор
+                    <button class="btn" id="achievements-btn">
+                        <span>🏆</span> Ачивки
                     </button>
                 </div>
             </div>
 
-            <div class="game-board-container">
-                <!-- ИГРА БУДЕТ ЗАГРУЖЕНА СРАЗУ -->
-                <div class="game-board" id="game-board">
-                    <!-- Поле появится после нажатия "Начать игру" -->
-                </div>
-                
-                <!-- ДОБАВЛЕНО: Начальный экран -->
-                <div id="start-screen" style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
-                    <h2 style="color: #2c3e50;">🎮 Готовы начать?</h2>
-                    <p style="color: #7f8c8d; max-width: 400px; text-align: center;">
-                        Настройте параметры игры в правой панели и нажмите 
-                        <strong>"Начать игру"</strong> ниже
-                    </p>
-                    <button class="btn btn-success" id="start-button-main" style="font-size: 1.2rem; padding: 15px 30px;">
-                        🚀 НАЧАТЬ ИГРУ
-                    </button>
-                </div>
-            </div>
-
+            <!-- ВЫБОР РЕЖИМА -->
             <div class="panel">
-                <div class="panel-title">⌨️ Управление</div>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                    <div style="font-size: 0.9rem; color: #5d6d7e;">
-                        <strong>ЛКМ</strong> — Открыть клетку
+                <div class="panel-title">🎮 Выбор режима</div>
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="classic">
+                        <span class="mode-icon">🎯</span>
+                        <span>Классика</span>
+                        <small>1-3 бомбы</small>
+                    </button>
+                    <button class="mode-btn" data-mode="chaos">
+                        <span class="mode-icon">🌀</span>
+                        <span>Хаос</span>
+                        <small>5-7 бомб</small>
+                    </button>
+                    <button class="mode-btn" data-mode="apocalypse">
+                        <span class="mode-icon">☢️</span>
+                        <span>Апокалипсис</span>
+                        <small>10+ бомб</small>
+                    </button>
+                    <button class="mode-btn" data-mode="custom">
+                        <span class="mode-icon">⚙️</span>
+                        <span>Свой</span>
+                        <small>Настрой сам</small>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ИГРОВОЕ ПОЛЕ -->
+            <div class="game-board-container">
+                <div class="game-board" id="game-board"></div>
+                
+                <!-- НАЧАЛЬНЫЙ ЭКРАН -->
+                <div id="start-screen" class="start-screen">
+                    <h2 style="font-size: 2.5rem; margin-bottom: 20px;">🎮 ВЫБЕРИ РЕЖИМ И НАЧИНАЙ!</h2>
+                    <p style="font-size: 1.1rem; max-width: 600px; margin-bottom: 30px;">
+                        <strong>✨ Новое в обновлении:</strong> 3 режима, улучшенная генерация карты, 
+                        умные динамические бомбы, система ачивок и плавные анимации!
+                    </p>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+                        <button class="btn btn-success" id="start-button-main" style="font-size: 1.3rem; padding: 18px 35px;">
+                            🚀 БЫСТРЫЙ СТАРТ
+                        </button>
+                        <button class="btn" id="tutorial-btn" style="font-size: 1.3rem; padding: 18px 35px;">
+                            📚 ОБУЧЕНИЕ
+                        </button>
                     </div>
-                    <div style="font-size: 0.9rem; color: #5d6d7e;">
-                        <strong>ПКМ</strong> — Флаг/Вопрос
+                </div>
+            </div>
+
+            <!-- УПРАВЛЕНИЕ -->
+            <div class="panel">
+                <div class="panel-title">🎯 Подсказки</div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div style="padding: 12px; background: rgba(52, 152, 219, 0.1); border-radius: 10px;">
+                        <div style="font-weight: 600; color: #3498db;">ЛКМ</div>
+                        <div style="font-size: 0.9rem;">Открыть клетку</div>
                     </div>
-                    <div style="font-size: 0.9rem; color: #5d6d7e;">
-                        <strong>Ctrl+Z</strong> — Отмена хода
+                    <div style="padding: 12px; background: rgba(231, 76, 60, 0.1); border-radius: 10px;">
+                        <div style="font-weight: 600; color: #e74c3c;">ПКМ</div>
+                        <div style="font-size: 0.9rem;">Флаг/Вопрос</div>
                     </div>
-                    <div style="font-size: 0.9rem; color: #5d6d7e;">
-                        <strong>Alt+Клик</strong> — Вопрос
+                    <div style="padding: 12px; background: rgba(46, 204, 113, 0.1); border-radius: 10px;">
+                        <div style="font-weight: 600; color: #2ecc71;">Ctrl+Z</div>
+                        <div style="font-size: 0.9rem;">Отмена хода</div>
+                    </div>
+                    <div style="padding: 12px; background: rgba(155, 89, 182, 0.1); border-radius: 10px;">
+                        <div style="font-weight: 600; color: #9b59b6;">Пробел</div>
+                        <div style="font-size: 0.9rem;">Быстрая подсказка</div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- БОКОВАЯ ПАНЕЛЬ -->
         <div class="sidebar">
+            <!-- НАСТРОЙКИ -->
             <div class="panel">
                 <div class="panel-title">⚙️ Настройки игры</div>
                 <div class="settings-grid">
                     <div class="setting-group">
                         <label class="setting-label">Размер поля</label>
                         <div class="range-with-value">
-                            <input type="range" id="board-size" min="5" max="20" value="9">
-                            <span id="board-size-value">9×9</span>
+                            <input type="range" id="board-size" min="6" max="20" value="12">
+                            <span id="board-size-value">12×12</span>
                         </div>
                     </div>
                     
                     <div class="setting-group">
                         <label class="setting-label">Количество мин</label>
                         <div class="range-with-value">
-                            <input type="range" id="mine-count-range" min="1" max="40" value="10">
-                            <span id="mine-count-value">10</span>
+                            <input type="range" id="mine-count-range" min="10" max="99" value="30">
+                            <span id="mine-count-value">30</span>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Динамических бомб</label>
+                        <div class="range-with-value">
+                            <input type="range" id="dynamic-bomb-count" min="1" max="15" value="3">
+                            <span id="dynamic-bomb-count-value">3</span>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Скорость бомб</label>
+                        <div class="range-with-value">
+                            <input type="range" id="bomb-interval" min="5" max="30" value="12">
+                            <span id="bomb-interval-value">12 сек</span>
                         </div>
                     </div>
                     
                     <div class="checkbox-group">
-                        <input type="checkbox" id="dynamic-bomb" checked>
-                        <label class="setting-label">Динамическая бомба</label>
+                        <input type="checkbox" id="smart-generation" checked>
+                        <label class="setting-label">Умная генерация</label>
                     </div>
                     
-                    <div class="setting-group">
-                        <label class="setting-label">Интервал бомбы (сек)</label>
-                        <div class="range-with-value">
-                            <input type="range" id="bomb-interval" min="5" max="30" value="15">
-                            <span id="bomb-interval-value">15</span>
-                        </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="visual-effects" checked>
+                        <label class="setting-label">Визуальные эффекты</label>
                     </div>
                 </div>
                 
-                <!-- ДОБАВЛЕНО: Основная кнопка начала игры -->
-                <div class="btn-group" style="margin-top: 20px;">
+                <!-- КНОПКИ УПРАВЛЕНИЯ -->
+                <div class="btn-group" style="margin-top: 25px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
                     <button class="btn btn-success" id="start-game" style="grid-column: 1 / -1;">
                         <span>▶️</span> НАЧАТЬ ИГРУ
                     </button>
                     <button class="btn" id="random-seed">
-                        <span>🎲</span> Случайный
+                        <span>🎲</span> Случайное поле
+                    </button>
+                    <button class="btn" id="save-game">
+                        <span>💾</span> Сохранить
                     </button>
                 </div>
             </div>
 
+            <!-- СТАТИСТИКА -->
             <div class="panel">
                 <div class="panel-title">📊 Статистика</div>
                 <div class="stats-grid">
@@ -863,522 +904,1121 @@
                         <div class="stat-label">Процент побед</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="best-time">--</div>
+                        <div class="stat-value" id="best-time">--:--</div>
                         <div class="stat-label">Лучшее время</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-bombs">0</div>
+                        <div class="stat-label">Бомб избежано</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-flags">0</div>
+                        <div class="stat-label">Флагов поставлено</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- АЧИВКИ -->
+            <div class="panel">
+                <div class="panel-title">🏆 Ачивки</div>
+                <div class="achievements-grid">
+                    <div class="achievement locked" title="Первая победа">
+                        🎯
+                    </div>
+                    <div class="achievement locked" title="Победить за 60 секунд">
+                        ⏱️
+                    </div>
+                    <div class="achievement locked" title="Избежать 10 бомб">
+                        💣
+                    </div>
+                    <div class="achievement locked" title="Победить в режиме Апокалипсис">
+                        ☢️
+                    </div>
+                    <div class="achievement locked" title="Поставить 100 флагов">
+                        🚩
+                    </div>
+                    <div class="achievement locked" title="Победить без подсказок">
+                        🧠
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- МОДАЛЬНОЕ ОКНО -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modal-title"></div>
+            <div id="modal-content"></div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button class="btn" id="modal-close">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // УПРОЩЁННАЯ И ИСПРАВЛЕННАЯ ВЕРСИЯ ИГРЫ
-        
-        // Основные настройки
-        const config = {
-            rows: 9,
-            cols: 9,
-            mines: 10,
-            dynamicBomb: true,
-            bombInterval: 15000
-        };
-        
-        let gameBoard = [];
-        let gameState = {
-            gameOver: false,
-            gameWon: false,
-            firstClick: true,
-            flaggedCount: 0,
-            revealedCount: 0,
-            startTime: null,
-            timerInterval: null,
-            bombTimer: null
-        };
-        
-        // DOM элементы
-        const elements = {
-            gameBoard: document.getElementById('game-board'),
-            mineCount: document.getElementById('mine-count'),
-            timer: document.getElementById('timer'),
-            bombTimer: document.getElementById('bomb-timer'),
-            startGameBtn: document.getElementById('start-game'),
-            restartBtn: document.getElementById('restart-btn'),
-            startButtonMain: document.getElementById('start-button-main')
-        };
-        
-        // Инициализация игры
-        function initGame() {
-            console.log("Игра инициализируется...");
+        // УЛУЧШЕННАЯ ВЕРСИЯ ИГРЫ С ВИЗУАЛЬНЫМИ ОБНОВЛЕНИЯМИ
+
+        const game = {
+            config: {
+                rows: 12,
+                cols: 12,
+                mines: 30,
+                dynamicBombs: 3,
+                bombInterval: 12000,
+                gameMode: 'classic',
+                smartGeneration: true,
+                visualEffects: true
+            },
             
-            // Скрываем начальный экран
-            document.getElementById('start-screen').style.display = 'none';
-            elements.gameBoard.style.display = 'grid';
-            
-            // Сброс состояния
-            gameState.gameOver = false;
-            gameState.gameWon = false;
-            gameState.firstClick = true;
-            gameState.flaggedCount = 0;
-            gameState.revealedCount = 0;
-            
-            // Остановка таймеров
-            stopTimers();
-            
-            // Создаём поле
-            createBoard();
-            
-            // Обновляем счетчики
-            updateCounters();
-            
-            // Рисуем поле
-            renderBoard();
-            
-            console.log("Игра готова! Кликните по любой клетке.");
-        }
-        
-        // Создание игрового поля
-        function createBoard() {
-            gameBoard = [];
-            
-            for (let r = 0; r < config.rows; r++) {
-                gameBoard[r] = [];
-                for (let c = 0; c < config.cols; c++) {
-                    gameBoard[r][c] = {
-                        row: r,
-                        col: c,
-                        isMine: false,
-                        isDynamicBomb: false,
-                        isRevealed: false,
-                        isFlagged: false,
-                        isQuestion: false,
-                        neighborMines: 0
-                    };
+            state: {
+                board: [],
+                gameOver: false,
+                gameWon: false,
+                firstClick: true,
+                flaggedCount: 0,
+                revealedCount: 0,
+                startTime: null,
+                timerInterval: null,
+                bombTimers: [],
+                moveHistory: [],
+                achievements: new Set(),
+                statistics: {
+                    gamesPlayed: 0,
+                    gamesWon: 0,
+                    totalFlags: 0,
+                    totalBombsAvoided: 0,
+                    bestTime: Infinity
                 }
-            }
+            },
             
-            // Расставляем мины (после первого клика)
-            // Пока только создаём пустое поле
-        }
-        
-        // Генерация мин после первого клика
-        function generateMines(firstRow, firstCol) {
-            console.log("Генерация мин...");
+            elements: {},
             
-            // Список всех клеток, кроме первой и её соседей
-            const availableCells = [];
-            for (let r = 0; r < config.rows; r++) {
-                for (let c = 0; c < config.cols; c++) {
-                    // Не ставим мины рядом с первым кликом
-                    const distance = Math.max(Math.abs(r - firstRow), Math.abs(c - firstCol));
-                    if (distance > 1) {
-                        availableCells.push({r, c});
+            init() {
+                console.log('🎮 Инициализация улучшенной версии...');
+                this.cacheElements();
+                this.initEventListeners();
+                this.loadFromStorage();
+                this.updateUI();
+                this.applyTheme();
+                console.log('✅ Игра готова!');
+            },
+            
+            cacheElements() {
+                // Основные элементы
+                this.elements = {
+                    gameBoard: document.getElementById('game-board'),
+                    startScreen: document.getElementById('start-screen'),
+                    startGameBtn: document.getElementById('start-game'),
+                    startButtonMain: document.getElementById('start-button-main'),
+                    restartBtn: document.getElementById('restart-btn'),
+                    undoBtn: document.getElementById('undo-btn'),
+                    hintBtn: document.getElementById('hint-btn'),
+                    themeToggle: document.getElementById('theme-toggle'),
+                    modal: document.getElementById('modal'),
+                    modalTitle: document.getElementById('modal-title'),
+                    modalContent: document.getElementById('modal-content'),
+                    modalClose: document.getElementById('modal-close')
+                };
+                
+                // Элементы отображения
+                ['mine-count', 'timer', 'bomb-count', 'bomb-timer'].forEach(id => {
+                    this.elements[id] = document.getElementById(id);
+                });
+                
+                // Элементы статистики
+                ['games-played', 'games-won', 'win-rate', 'best-time', 'total-bombs', 'total-flags'].forEach(id => {
+                    this.elements[id] = document.getElementById(id);
+                });
+            },
+            
+            initEventListeners() {
+                // Основные кнопки
+                this.elements.startGameBtn.addEventListener('click', () => this.startNewGame());
+                this.elements.startButtonMain.addEventListener('click', () => this.startNewGame());
+                this.elements.restartBtn.addEventListener('click', () => this.startNewGame());
+                this.elements.undoBtn.addEventListener('click', () => this.undoMove());
+                this.elements.hintBtn.addEventListener('click', () => this.giveHint());
+                this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
+                this.elements.modalClose.addEventListener('click', () => this.closeModal());
+                
+                // Режимы игры
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.setGameMode(e.target.closest('.mode-btn').dataset.mode);
+                    });
+                });
+                
+                // Настройки
+                this.initSettings();
+                
+                // Горячие клавиши
+                document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+                
+                // Клик по фону для закрытия модального окна
+                this.elements.modal.addEventListener('click', (e) => {
+                    if (e.target === this.elements.modal) this.closeModal();
+                });
+            },
+            
+            initSettings() {
+                // Слайдеры
+                const sliders = {
+                    'board-size': (val) => {
+                        this.config.rows = this.config.cols = parseInt(val);
+                        document.getElementById('board-size-value').textContent = `${val}×${val}`;
+                    },
+                    'mine-count-range': (val) => {
+                        this.config.mines = parseInt(val);
+                        document.getElementById('mine-count-value').textContent = val;
+                    },
+                    'dynamic-bomb-count': (val) => {
+                        this.config.dynamicBombs = parseInt(val);
+                        document.getElementById('dynamic-bomb-count-value').textContent = val;
+                    },
+                    'bomb-interval': (val) => {
+                        this.config.bombInterval = parseInt(val) * 1000;
+                        document.getElementById('bomb-interval-value').textContent = `${val} сек`;
+                    }
+                };
+                
+                Object.entries(sliders).forEach(([id, callback]) => {
+                    const slider = document.getElementById(id);
+                    slider.addEventListener('input', () => {
+                        callback(slider.value);
+                        this.updateUI();
+                    });
+                });
+                
+                // Чекбоксы
+                document.getElementById('smart-generation').addEventListener('change', (e) => {
+                    this.config.smartGeneration = e.target.checked;
+                });
+                
+                document.getElementById('visual-effects').addEventListener('change', (e) => {
+                    this.config.visualEffects = e.target.checked;
+                });
+                
+                // Кнопка случайного поля
+                document.getElementById('random-seed').addEventListener('click', () => {
+                    this.config.rows = this.config.cols = Math.floor(Math.random() * 10) + 8;
+                    this.config.mines = Math.floor((this.config.rows * this.config.cols) * 0.18);
+                    this.config.dynamicBombs = Math.floor(Math.random() * 5) + 2;
+                    
+                    // Обновляем слайдеры
+                    document.getElementById('board-size').value = this.config.rows;
+                    document.getElementById('mine-count-range').value = this.config.mines;
+                    document.getElementById('dynamic-bomb-count').value = this.config.dynamicBombs;
+                    
+                    this.updateUI();
+                    this.showMessage('🎲 Поле сгенерировано случайно!');
+                });
+                
+                // Кнопка сохранения
+                document.getElementById('save-game').addEventListener('click', () => this.saveGame());
+            },
+            
+            setGameMode(mode) {
+                this.config.gameMode = mode;
+                
+                // Обновляем активную кнопку
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.mode === mode);
+                });
+                
+                // Применяем тему режима
+                document.body.classList.remove('mode-classic', 'mode-chaos', 'mode-apocalypse');
+                if (mode !== 'custom') {
+                    document.body.classList.add(`mode-${mode}`);
+                }
+                
+                // Настройки для режимов
+                const modes = {
+                    classic: { rows: 9, cols: 9, mines: 10, bombs: 2 },
+                    chaos: { rows: 12, cols: 12, mines: 25, bombs: 5 },
+                    apocalypse: { rows: 15, cols: 15, mines: 50, bombs: 10 },
+                    custom: {} // Оставляем текущие настройки
+                };
+                
+                if (modes[mode]) {
+                    Object.assign(this.config, modes[mode]);
+                    
+                    // Обновляем слайдеры
+                    document.getElementById('board-size').value = this.config.rows;
+                    document.getElementById('mine-count-range').value = this.config.mines;
+                    document.getElementById('dynamic-bomb-count').value = this.config.dynamicBombs;
+                    
+                    this.updateUI();
+                }
+                
+                this.showMessage(`🎮 Режим "${this.getModeName(mode)}" активирован`);
+            },
+            
+            getModeName(mode) {
+                const names = {
+                    classic: 'Классика',
+                    chaos: 'Хаос',
+                    apocalypse: 'Апокалипсис',
+                    custom: 'Свой'
+                };
+                return names[mode] || mode;
+            },
+            
+            startNewGame() {
+                console.log('🔄 Начинаем новую игру...');
+                
+                // Скрываем стартовый экран
+                this.elements.startScreen.style.display = 'none';
+                this.elements.gameBoard.style.display = 'grid';
+                
+                // Сброс состояния
+                this.resetGameState();
+                
+                // Создаем поле
+                this.createBoard();
+                
+                // Обновляем интерфейс
+                this.updateUI();
+                this.renderBoard();
+                
+                this.showMessage('🎮 Игра началась! Сделайте первый ход');
+            },
+            
+            resetGameState() {
+                this.state = {
+                    board: [],
+                    gameOver: false,
+                    gameWon: false,
+                    firstClick: true,
+                    flaggedCount: 0,
+                    revealedCount: 0,
+                    startTime: null,
+                    timerInterval: null,
+                    bombTimers: [],
+                    moveHistory: [],
+                    achievements: new Set(this.state.achievements),
+                    statistics: this.state.statistics
+                };
+                
+                this.stopAllTimers();
+            },
+            
+            createBoard() {
+                this.state.board = [];
+                
+                for (let r = 0; r < this.config.rows; r++) {
+                    this.state.board[r] = [];
+                    for (let c = 0; c < this.config.cols; c++) {
+                        this.state.board[r][c] = {
+                            row: r,
+                            col: c,
+                            isMine: false,
+                            isDynamicBomb: false,
+                            isRevealed: false,
+                            isFlagged: false,
+                            isQuestion: false,
+                            neighborMines: 0
+                        };
                     }
                 }
-            }
+                
+                // Пока не генерируем мины - ждем первый клик
+            },
             
-            // Размещаем мины
-            let minesPlaced = 0;
-            while (minesPlaced < config.mines && availableCells.length > 0) {
-                const index = Math.floor(Math.random() * availableCells.length);
-                const {r, c} = availableCells.splice(index, 1)[0];
-                gameBoard[r][c].isMine = true;
-                minesPlaced++;
-            }
-            
-            // Размещаем динамическую бомбу
-            if (config.dynamicBomb && availableCells.length > 0) {
-                const index = Math.floor(Math.random() * availableCells.length);
-                const {r, c} = availableCells[index];
-                gameBoard[r][c].isDynamicBomb = true;
-            }
-            
-            // Считаем соседей
-            calculateNeighbors();
-            
-            // Запускаем таймер
-            startTimer();
-        }
-        
-        // Подсчёт мин вокруг каждой клетки
-        function calculateNeighbors() {
-            const directions = [
-                [-1, -1], [-1, 0], [-1, 1],
-                [0, -1],           [0, 1],
-                [1, -1],  [1, 0],  [1, 1]
-            ];
-            
-            for (let r = 0; r < config.rows; r++) {
-                for (let c = 0; c < config.cols; c++) {
-                    if (gameBoard[r][c].isMine) continue;
+            // УЛУЧШЕННАЯ ГЕНЕРАЦИЯ КАРТЫ
+            generateBoard(firstRow, firstCol) {
+                console.log('🧠 Улучшенная генерация карты...');
+                
+                const totalCells = this.config.rows * this.config.cols;
+                const safeZone = this.getSafeZone(firstRow, firstCol);
+                
+                // Список всех доступных клеток (кроме безопасной зоны)
+                const availableCells = [];
+                for (let r = 0; r < this.config.rows; r++) {
+                    for (let c = 0; c < this.config.cols; c++) {
+                        if (!safeZone.has(`${r},${c}`)) {
+                            availableCells.push({ r, c });
+                        }
+                    }
+                }
+                
+                // 1. Размещаем обычные мины
+                let minesPlaced = 0;
+                while (minesPlaced < this.config.mines && availableCells.length > 0) {
+                    const index = Math.floor(Math.random() * availableCells.length);
+                    const { r, c } = availableCells.splice(index, 1)[0];
                     
-                    let count = 0;
-                    for (const [dr, dc] of directions) {
-                        const nr = r + dr;
-                        const nc = c + dc;
-                        if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols) {
-                            if (gameBoard[nr][nc].isMine) {
+                    if (this.config.smartGeneration) {
+                        // Проверяем, чтобы мины не образовывали кластеры
+                        const neighborMines = this.countNeighborMines(r, c, 'isMine');
+                        if (neighborMines < 2) { // Не больше 2 соседних мин
+                            this.state.board[r][c].isMine = true;
+                            minesPlaced++;
+                        } else {
+                            // Возвращаем клетку в конец списка
+                            availableCells.push({ r, c });
+                        }
+                    } else {
+                        this.state.board[r][c].isMine = true;
+                        minesPlaced++;
+                    }
+                }
+                
+                // 2. Размещаем динамические бомбы
+                let bombsPlaced = 0;
+                const bombPositions = [];
+                
+                while (bombsPlaced < this.config.dynamicBombs && availableCells.length > 0) {
+                    const index = Math.floor(Math.random() * availableCells.length);
+                    const { r, c } = availableCells.splice(index, 1)[0];
+                    
+                    // Динамические бомбы не должны быть рядом друг с другом
+                    const tooClose = bombPositions.some(pos => 
+                        Math.abs(pos.r - r) <= 2 && Math.abs(pos.c - c) <= 2
+                    );
+                    
+                    if (!tooClose) {
+                        this.state.board[r][c].isDynamicBomb = true;
+                        bombPositions.push({ r, c });
+                        bombsPlaced++;
+                    } else {
+                        availableCells.push({ r, c });
+                    }
+                }
+                
+                // 3. Вычисляем соседей
+                this.calculateNeighbors();
+                
+                // 4. Запускаем таймеры
+                this.startGameTimers();
+                
+                console.log(`✅ Сгенерировано: ${minesPlaced} мин, ${bombsPlaced} динамических бомб`);
+            },
+            
+            getSafeZone(row, col) {
+                const safeZone = new Set();
+                
+                // Добавляем клетку первого клика и всех ее соседей
+                for (let dr = -2; dr <= 2; dr++) {
+                    for (let dc = -2; dc <= 2; dc++) {
+                        const nr = row + dr;
+                        const nc = col + dc;
+                        
+                        if (nr >= 0 && nr < this.config.rows && nc >= 0 && nc < this.config.cols) {
+                            safeZone.add(`${nr},${nc}`);
+                        }
+                    }
+                }
+                
+                return safeZone;
+            },
+            
+            countNeighborMines(row, col, type) {
+                let count = 0;
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        
+                        const nr = row + dr;
+                        const nc = col + dc;
+                        
+                        if (nr >= 0 && nr < this.config.rows && nc >= 0 && nc < this.config.cols) {
+                            if (this.state.board[nr][nc][type]) {
                                 count++;
                             }
                         }
                     }
-                    gameBoard[r][c].neighborMines = count;
                 }
-            }
-        }
-        
-        // Отрисовка поля
-        function renderBoard() {
-            elements.gameBoard.innerHTML = '';
-            elements.gameBoard.style.gridTemplateColumns = `repeat(${config.cols}, 1fr)`;
-            elements.gameBoard.style.gridTemplateRows = `repeat(${config.rows}, 1fr)`;
+                return count;
+            },
             
-            for (let r = 0; r < config.rows; r++) {
-                for (let c = 0; c < config.cols; c++) {
-                    const cell = gameBoard[r][c];
-                    const cellElement = document.createElement('div');
-                    cellElement.className = 'cell';
-                    cellElement.dataset.row = r;
-                    cellElement.dataset.col = c;
-                    
-                    // Добавляем классы в зависимости от состояния
-                    if (cell.isRevealed) {
-                        cellElement.classList.add('revealed');
+            calculateNeighbors() {
+                for (let r = 0; r < this.config.rows; r++) {
+                    for (let c = 0; c < this.config.cols; c++) {
+                        if (this.state.board[r][c].isMine) continue;
                         
-                        if (cell.isMine) {
-                            cellElement.classList.add('mine');
-                        } else if (cell.neighborMines > 0) {
-                            cellElement.classList.add(`number-${cell.neighborMines}`);
-                            cellElement.textContent = cell.neighborMines;
-                        }
-                    } else {
-                        if (cell.isFlagged) {
-                            cellElement.classList.add('flagged');
-                        } else if (cell.isQuestion) {
-                            cellElement.classList.add('question');
-                        }
+                        this.state.board[r][c].neighborMines = this.countNeighborMines(r, c, 'isMine');
                     }
-                    
-                    // Динамическая бомба
-                    if (cell.isDynamicBomb) {
-                        cellElement.classList.add('dynamic-bomb');
-                    }
-                    
-                    // Обработчики событий
-                    cellElement.addEventListener('click', (e) => handleCellClick(r, c, e));
-                    cellElement.addEventListener('contextmenu', (e) => {
-                        e.preventDefault();
-                        handleRightClick(r, c);
-                    });
-                    
-                    elements.gameBoard.appendChild(cellElement);
                 }
-            }
-        }
-        
-        // Обработка клика по клетке
-        function handleCellClick(row, col, event) {
-            if (gameState.gameOver || gameState.gameWon) return;
+            },
             
-            const cell = gameBoard[row][col];
+            renderBoard() {
+                this.elements.gameBoard.innerHTML = '';
+                this.elements.gameBoard.style.gridTemplateColumns = `repeat(${this.config.cols}, 1fr)`;
+                this.elements.gameBoard.style.gridTemplateRows = `repeat(${this.config.rows}, 1fr)`;
+                
+                for (let r = 0; r < this.config.rows; r++) {
+                    for (let c = 0; c < this.config.cols; c++) {
+                        const cell = this.state.board[r][c];
+                        const cellElement = document.createElement('div');
+                        cellElement.className = 'cell';
+                        cellElement.dataset.row = r;
+                        cellElement.dataset.col = c;
+                        
+                        // Состояние клетки
+                        if (cell.isRevealed) {
+                            cellElement.classList.add('revealed');
+                            
+                            if (cell.isMine) {
+                                cellElement.classList.add('mine');
+                            } else if (cell.neighborMines > 0) {
+                                cellElement.classList.add(`number-${cell.neighborMines}`);
+                                cellElement.textContent = cell.neighborMines;
+                            }
+                        } else {
+                            if (cell.isFlagged) {
+                                cellElement.classList.add('flagged');
+                            } else if (cell.isQuestion) {
+                                cellElement.classList.add('question');
+                            }
+                        }
+                        
+                        // Динамическая бомба
+                        if (cell.isDynamicBomb) {
+                            cellElement.classList.add('dynamic-bomb');
+                        }
+                        
+                        // Обработчики событий
+                        cellElement.addEventListener('click', (e) => this.handleCellClick(r, c, e));
+                        cellElement.addEventListener('contextmenu', (e) => {
+                            e.preventDefault();
+                            this.handleRightClick(r, c);
+                        });
+                        
+                        cellElement.addEventListener('mouseenter', () => {
+                            if (!this.state.gameOver && !this.state.gameWon) {
+                                this.highlightNeighbors(r, c);
+                            }
+                        });
+                        
+                        cellElement.addEventListener('mouseleave', () => {
+                            this.removeHighlight();
+                        });
+                        
+                        this.elements.gameBoard.appendChild(cellElement);
+                    }
+                }
+            },
             
-            // Если клетка помечена, игнорируем
-            if (cell.isFlagged || cell.isQuestion) return;
+            handleCellClick(row, col, event) {
+                if (this.state.gameOver || this.state.gameWon) return;
+                
+                const cell = this.state.board[row][col];
+                
+                // Сохраняем ход для отмены
+                this.saveMove(cell);
+                
+                // Если клетка помечена - игнорируем
+                if (cell.isFlagged || cell.isQuestion) return;
+                
+                // Первый клик - генерируем поле
+                if (this.state.firstClick) {
+                    this.state.firstClick = false;
+                    this.generateBoard(row, col);
+                }
+                
+                // Если это мина или динамическая бомба - конец игры
+                if (cell.isMine || (cell.isDynamicBomb && cell.isRevealed)) {
+                    this.gameOver(false);
+                    return;
+                }
+                
+                // Открываем клетку
+                this.revealCell(row, col);
+                
+                // Проверяем победу
+                this.checkWin();
+            },
             
-            // Первый клик - генерируем поле
-            if (gameState.firstClick) {
-                gameState.firstClick = false;
-                generateMines(row, col);
-            }
+            handleRightClick(row, col) {
+                if (this.state.gameOver || this.state.gameWon) return;
+                
+                const cell = this.state.board[row][col];
+                if (cell.isRevealed) return;
+                
+                // Сохраняем ход для отмены
+                this.saveMove(cell);
+                
+                // Цикл состояний
+                if (!cell.isFlagged && !cell.isQuestion) {
+                    cell.isFlagged = true;
+                    this.state.flaggedCount++;
+                    this.state.statistics.totalFlags++;
+                } else if (cell.isFlagged) {
+                    cell.isFlagged = false;
+                    cell.isQuestion = true;
+                    this.state.flaggedCount--;
+                } else if (cell.isQuestion) {
+                    cell.isQuestion = false;
+                }
+                
+                this.updateUI();
+                this.renderBoard();
+            },
             
-            // Если это мина - конец игры
-            if (cell.isMine) {
-                gameOver(false);
-                return;
-            }
+            revealCell(row, col) {
+                if (row < 0 || row >= this.config.rows || col < 0 || col >= this.config.cols) return;
+                
+                const cell = this.state.board[row][col];
+                if (cell.isRevealed || cell.isFlagged || cell.isQuestion) return;
+                
+                cell.isRevealed = true;
+                this.state.revealedCount++;
+                
+                // Визуальный эффект
+                if (this.config.visualEffects) {
+                    this.createRevealEffect(row, col);
+                }
+                
+                // Если пустая клетка - открываем соседей
+                if (!cell.isMine && cell.neighborMines === 0) {
+                    for (let dr = -1; dr <= 1; dr++) {
+                        for (let dc = -1; dc <= 1; dc++) {
+                            this.revealCell(row + dr, col + dc);
+                        }
+                    }
+                }
+                
+                this.renderBoard();
+            },
             
-            // Открываем клетку
-            revealCell(row, col);
+            checkWin() {
+                const totalCells = this.config.rows * this.config.cols;
+                const totalSafeCells = totalCells - this.config.mines;
+                
+                if (this.state.revealedCount === totalSafeCells) {
+                    this.gameOver(true);
+                }
+            },
             
-            // Проверяем победу
-            checkWin();
-        }
-        
-        // Обработка правого клика
-        function handleRightClick(row, col) {
-            if (gameState.gameOver || gameState.gameWon) return;
+            gameOver(isWin) {
+                this.state.gameOver = true;
+                this.state.gameWon = isWin;
+                
+                this.stopAllTimers();
+                
+                // Обновляем статистику
+                this.state.statistics.gamesPlayed++;
+                if (isWin) {
+                    this.state.statistics.gamesWon++;
+                    
+                    const time = parseInt(this.elements.timer.textContent);
+                    if (time < this.state.statistics.bestTime) {
+                        this.state.statistics.bestTime = time;
+                    }
+                    
+                    // Проверяем ачивки
+                    this.checkAchievements();
+                    
+                    // Эффект победы
+                    if (this.config.visualEffects) {
+                        this.createVictoryEffect();
+                    }
+                }
+                
+                // Показываем все мины
+                for (let r = 0; r < this.config.rows; r++) {
+                    for (let c = 0; c < this.config.cols; c++) {
+                        if (this.state.board[r][c].isMine) {
+                            this.state.board[r][c].isRevealed = true;
+                        }
+                    }
+                }
+                
+                this.renderBoard();
+                this.saveToStorage();
+                this.updateUI();
+                
+                // Сообщение
+                setTimeout(() => {
+                    if (isWin) {
+                        const time = this.elements.timer.textContent;
+                        this.showModal(
+                            '🎉 ПОБЕДА!',
+                            `Вы выиграли за ${time} секунд!<br><br>
+                            <strong>Статистика игры:</strong><br>
+                            • Флагов поставлено: ${this.state.flaggedCount}<br>
+                            • Бомб избежано: ${this.state.statistics.totalBombsAvoided}<br>
+                            • Ходов сделано: ${this.state.moveHistory.length}`
+                        );
+                    } else {
+                        this.showModal(
+                            '💥 ИГРА ОКОНЧЕНА',
+                            'Вы наступили на мину!<br><br>
+                            Попробуйте еще раз, будьте внимательнее!'
+                        );
+                    }
+                }, 500);
+            },
             
-            const cell = gameBoard[row][col];
-            if (cell.isRevealed) return;
+            // ТАЙМЕРЫ
+            startGameTimers() {
+                this.state.startTime = Date.now();
+                
+                // Основной таймер
+                this.state.timerInterval = setInterval(() => {
+                    const seconds = Math.floor((Date.now() - this.state.startTime) / 1000);
+                    this.elements.timer.textContent = seconds.toString().padStart(3, '0');
+                }, 1000);
+                
+                // Таймеры для динамических бомб
+                this.startBombTimers();
+            },
             
-            // Цикл: hidden → flagged → question → hidden
-            if (!cell.isFlagged && !cell.isQuestion) {
-                cell.isFlagged = true;
-                gameState.flaggedCount++;
-            } else if (cell.isFlagged) {
-                cell.isFlagged = false;
-                cell.isQuestion = true;
-                gameState.flaggedCount--;
-            } else if (cell.isQuestion) {
-                cell.isQuestion = false;
-            }
+            startBombTimers() {
+                this.stopBombTimers();
+                
+                for (let i = 0; i < this.config.dynamicBombs; i++) {
+                    const timer = setInterval(() => {
+                        this.moveDynamicBomb();
+                    }, this.config.bombInterval + Math.random() * 5000);
+                    
+                    this.state.bombTimers.push(timer);
+                }
+            },
             
-            updateCounters();
-            renderBoard();
-        }
-        
-        // Рекурсивное открытие клеток
-        function revealCell(row, col) {
-            if (row < 0 || row >= config.rows || col < 0 || col >= config.cols) return;
+            stopAllTimers() {
+                if (this.state.timerInterval) {
+                    clearInterval(this.state.timerInterval);
+                }
+                this.stopBombTimers();
+            },
             
-            const cell = gameBoard[row][col];
-            if (cell.isRevealed || cell.isFlagged || cell.isQuestion) return;
+            stopBombTimers() {
+                this.state.bombTimers.forEach(timer => clearInterval(timer));
+                this.state.bombTimers = [];
+            },
             
-            cell.isRevealed = true;
-            gameState.revealedCount++;
+            // ПЕРЕМЕЩЕНИЕ ДИНАМИЧЕСКИХ БОМБ
+            moveDynamicBomb() {
+                // Находим все динамические бомбы
+                const bombs = [];
+                for (let r = 0; r < this.config.rows; r++) {
+                    for (let c = 0; c < this.config.cols; c++) {
+                        if (this.state.board[r][c].isDynamicBomb) {
+                            bombs.push({ r, c });
+                        }
+                    }
+                }
+                
+                // Для каждой бомбы ищем новое место
+                bombs.forEach(bomb => {
+                    const possibleMoves = [];
+                    
+                    // Проверяем все соседние клетки
+                    for (let dr = -2; dr <= 2; dr++) {
+                        for (let dc = -2; dc <= 2; dc++) {
+                            if (dr === 0 && dc === 0) continue;
+                            
+                            const nr = bomb.r + dr;
+                            const nc = bomb.c + dc;
+                            
+                            if (nr >= 0 && nr < this.config.rows && nc >= 0 && nc < this.config.cols) {
+                                const cell = this.state.board[nr][nc];
+                                if (!cell.isRevealed && !cell.isFlagged && !cell.isQuestion && !cell.isMine) {
+                                    // Проверяем, нет ли там уже бомбы
+                                    const hasBomb = bombs.some(b => b.r === nr && b.c === nc);
+                                    if (!hasBomb) {
+                                        possibleMoves.push({ r: nr, c: nc });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (possibleMoves.length > 0) {
+                        // Выбираем случайное направление
+                        const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+                        
+                        // Перемещаем бомбу
+                        this.state.board[bomb.r][bomb.c].isDynamicBomb = false;
+                        this.state.board[move.r][move.c].isDynamicBomb = true;
+                        
+                        // Эффект волны
+                        if (this.config.visualEffects) {
+                            this.createWaveEffect(move.r, move.c);
+                        }
+                        
+                        this.state.statistics.totalBombsAvoided++;
+                    }
+                });
+                
+                this.renderBoard();
+                this.updateUI();
+            },
             
-            // Если пустая клетка - открываем соседей
-            if (!cell.isMine && cell.neighborMines === 0) {
-                const directions = [
-                    [-1, -1], [-1, 0], [-1, 1],
-                    [0, -1],           [0, 1],
-                    [1, -1],  [1, 0],  [1, 1]
+            // ВИЗУАЛЬНЫЕ ЭФФЕКТЫ
+            createRevealEffect(row, col) {
+                const cellElement = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                if (cellElement) {
+                    cellElement.style.animation = 'cell-reveal 0.4s ease-out';
+                }
+            },
+            
+            createWaveEffect(row, col) {
+                const wave = document.createElement('div');
+                wave.className = 'wave-effect';
+                wave.style.left = `${col * 41}px`;
+                wave.style.top = `${row * 41}px`;
+                wave.style.color = this.getBombColor();
+                
+                this.elements.gameBoard.appendChild(wave);
+                setTimeout(() => wave.remove(), 600);
+            },
+            
+            createVictoryEffect() {
+                const confettiColors = ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6'];
+                
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = `${Math.random() * 100}vw`;
+                    confetti.style.top = '-10px';
+                    confetti.style.backgroundColor = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+                    confetti.style.width = `${Math.random() * 10 + 5}px`;
+                    confetti.style.height = confetti.style.width;
+                    confetti.style.animationDuration = `${Math.random() * 2 + 1}s`;
+                    
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }
+            },
+            
+            getBombColor() {
+                const colors = {
+                    classic: '#ff9f43',
+                    chaos: '#00ffff',
+                    apocalypse: '#ff0000'
+                };
+                return colors[this.config.gameMode] || '#ff9f43';
+            },
+            
+            // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+            highlightNeighbors(row, col) {
+                const cell = this.state.board[row][col];
+                if (cell.isRevealed && cell.neighborMines > 0) {
+                    for (let dr = -1; dr <= 1; dr++) {
+                        for (let dc = -1; dc <= 1; dc++) {
+                            const nr = row + dr;
+                            const nc = col + dc;
+                            
+                            if (nr >= 0 && nr < this.config.rows && nc >= 0 && nc < this.config.cols) {
+                                const neighborCell = this.state.board[nr][nc];
+                                if (!neighborCell.isRevealed && !neighborCell.isFlagged) {
+                                    const cellElement = document.querySelector(
+                                        `.cell[data-row="${nr}"][data-col="${nc}"]`
+                                    );
+                                    if (cellElement) {
+                                        cellElement.style.boxShadow = '0 0 0 2px #3498db';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            
+            removeHighlight() {
+                document.querySelectorAll('.cell').forEach(cell => {
+                    cell.style.boxShadow = '';
+                });
+            },
+            
+            saveMove(cell) {
+                this.state.moveHistory.push({
+                    row: cell.row,
+                    col: cell.col,
+                    wasRevealed: cell.isRevealed,
+                    wasFlagged: cell.isFlagged,
+                    wasQuestion: cell.isQuestion,
+                    isMine: cell.isMine,
+                    isDynamicBomb: cell.isDynamicBomb
+                });
+                
+                // Ограничиваем историю последними 50 ходами
+                if (this.state.moveHistory.length > 50) {
+                    this.state.moveHistory.shift();
+                }
+            },
+            
+            undoMove() {
+                if (this.state.moveHistory.length === 0 || this.state.gameOver || this.state.gameWon) {
+                    this.showMessage('Нет ходов для отмены');
+                    return;
+                }
+                
+                const lastMove = this.state.moveHistory.pop();
+                const cell = this.state.board[lastMove.row][lastMove.col];
+                
+                // Восстанавливаем состояние
+                cell.isRevealed = lastMove.wasRevealed;
+                cell.isFlagged = lastMove.wasFlagged;
+                cell.isQuestion = lastMove.wasQuestion;
+                
+                // Обновляем счетчики
+                if (lastMove.wasFlagged && !cell.isFlagged) {
+                    this.state.flaggedCount--;
+                } else if (!lastMove.wasFlagged && cell.isFlagged) {
+                    this.state.flaggedCount++;
+                }
+                
+                if (lastMove.wasRevealed && !cell.isRevealed) {
+                    this.state.revealedCount--;
+                } else if (!lastMove.wasRevealed && cell.isRevealed) {
+                    this.state.revealedCount++;
+                }
+                
+                this.updateUI();
+                this.renderBoard();
+                this.showMessage('↶ Ход отменен');
+            },
+            
+            giveHint() {
+                if (this.state.gameOver || this.state.gameWon || this.state.firstClick) {
+                    this.showMessage('Не могу подсказать сейчас');
+                    return;
+                }
+                
+                // Ищем безопасную клетку
+                let safeCells = [];
+                for (let r = 0; r < this.config.rows; r++) {
+                    for (let c = 0; c < this.config.cols; c++) {
+                        const cell = this.state.board[r][c];
+                        if (!cell.isRevealed && !cell.isFlagged && !cell.isQuestion && !cell.isMine) {
+                            safeCells.push({ r, c, cell });
+                        }
+                    }
+                }
+                
+                if (safeCells.length > 0) {
+                    // Выбираем клетку с наименьшим количеством соседних мин
+                    safeCells.sort((a, b) => a.cell.neighborMines - b.cell.neighborMines);
+                    const hint = safeCells[0];
+                    
+                    // Подсвечиваем клетку
+                    const cellElement = document.querySelector(
+                        `.cell[data-row="${hint.r}"][data-col="${hint.c}"]`
+                    );
+                    
+                    if (cellElement) {
+                        cellElement.style.animation = 'pulse 1s 3';
+                        this.showMessage(`💡 Подсказка: попробуйте клетку (${hint.r + 1}, ${hint.c + 1})`);
+                    }
+                } else {
+                    this.showMessage('Не осталось безопасных клеток для подсказки');
+                }
+            },
+            
+            checkAchievements() {
+                const time = parseInt(this.elements.timer.textContent);
+                const achievements = [
+                    { id: 'first-win', condition: this.state.statistics.gamesWon === 1, emoji: '🎯' },
+                    { id: 'fast-win', condition: time < 60, emoji: '⏱️' },
+                    { id: 'bomb-dodger', condition: this.state.statistics.totalBombsAvoided >= 10, emoji: '💣' },
+                    { id: 'apocalypse', condition: this.config.gameMode === 'apocalypse' && this.state.gameWon, emoji: '☢️' },
+                    { id: 'flag-master', condition: this.state.statistics.totalFlags >= 100, emoji: '🚩' }
                 ];
                 
-                for (const [dr, dc] of directions) {
-                    revealCell(row + dr, col + dc);
-                }
-            }
-            
-            renderBoard();
-        }
-        
-        // Проверка победы
-        function checkWin() {
-            const totalCells = config.rows * config.cols;
-            const revealedSafeCells = gameState.revealedCount;
-            const totalSafeCells = totalCells - config.mines;
-            
-            if (revealedSafeCells === totalSafeCells) {
-                gameOver(true);
-            }
-        }
-        
-        // Конец игры
-        function gameOver(isWin) {
-            gameState.gameOver = true;
-            gameState.gameWon = isWin;
-            
-            stopTimers();
-            
-            // Показываем все мины
-            for (let r = 0; r < config.rows; r++) {
-                for (let c = 0; c < config.cols; c++) {
-                    if (gameBoard[r][c].isMine) {
-                        gameBoard[r][c].isRevealed = true;
+                achievements.forEach(ach => {
+                    if (ach.condition && !this.state.achievements.has(ach.id)) {
+                        this.state.achievements.add(ach.id);
+                        this.unlockAchievement(ach.emoji);
                     }
+                });
+            },
+            
+            unlockAchievement(emoji) {
+                const achievementElement = document.querySelector(`.achievement:contains(${emoji})`);
+                if (achievementElement) {
+                    achievementElement.classList.remove('locked');
+                    achievementElement.classList.add('unlocked');
+                    
+                    setTimeout(() => {
+                        this.showMessage(`🏆 Ачивка разблокирована: ${achievementElement.title}`);
+                    }, 1000);
                 }
-            }
+            },
             
-            renderBoard();
+            // ТЕМА И ВНЕШНИЙ ВИД
+            toggleTheme() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('minesweeper-theme', newTheme);
+                
+                const toggleBtn = this.elements.themeToggle;
+                toggleBtn.innerHTML = newTheme === 'dark' 
+                    ? '<span>☀️</span><span>Светлая тема</span>'
+                    : '<span>🌙</span><span>Темная тема</span>';
+            },
             
-            // Сообщение о результате
-            setTimeout(() => {
-                if (isWin) {
-                    alert(`🎉 Победа! Время: ${document.getElementById('timer').textContent} секунд`);
-                } else {
-                    alert('💥 Игра окончена! Вы попали на мину.');
-                }
-            }, 100);
-        }
-        
-        // Таймеры
-        function startTimer() {
-            gameState.startTime = Date.now();
+            applyTheme() {
+                const savedTheme = localStorage.getItem('minesweeper-theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                
+                const toggleBtn = this.elements.themeToggle;
+                toggleBtn.innerHTML = savedTheme === 'dark'
+                    ? '<span>☀️</span><span>Светлая тема</span>'
+                    : '<span>🌙</span><span>Темная тема</span>';
+            },
             
-            // Основной таймер
-            gameState.timerInterval = setInterval(() => {
-                const seconds = Math.floor((Date.now() - gameState.startTime) / 1000);
-                elements.timer.textContent = seconds.toString().padStart(3, '0');
-            }, 1000);
+            // СОХРАНЕНИЕ И ЗАГРУЗКА
+            saveToStorage() {
+                const data = {
+                    statistics: this.state.statistics,
+                    achievements: Array.from(this.state.achievements),
+                    config: this.config
+                };
+                
+                localStorage.setItem('minesweeper-pro', JSON.stringify(data));
+            },
             
-            // Таймер бомбы
-            if (config.dynamicBomb) {
-                gameState.bombTimer = setInterval(() => {
-                    moveDynamicBomb();
-                }, config.bombInterval);
-            }
-        }
-        
-        function stopTimers() {
-            if (gameState.timerInterval) {
-                clearInterval(gameState.timerInterval);
-                gameState.timerInterval = null;
-            }
-            if (gameState.bombTimer) {
-                clearInterval(gameState.bombTimer);
-                gameState.bombTimer = null;
-            }
-        }
-        
-        // Перемещение динамической бомбы
-        function moveDynamicBomb() {
-            // Находим текущую позицию бомбы
-            let currentPos = null;
-            for (let r = 0; r < config.rows; r++) {
-                for (let c = 0; c < config.cols; c++) {
-                    if (gameBoard[r][c].isDynamicBomb) {
-                        currentPos = {r, c};
-                        break;
+            loadFromStorage() {
+                try {
+                    const data = JSON.parse(localStorage.getItem('minesweeper-pro'));
+                    if (data) {
+                        this.state.statistics = data.statistics || this.state.statistics;
+                        this.state.achievements = new Set(data.achievements || []);
+                        this.config = { ...this.config, ...data.config };
+                        
+                        // Обновляем слайдеры
+                        document.getElementById('board-size').value = this.config.rows;
+                        document.getElementById('mine-count-range').value = this.config.mines;
+                        document.getElementById('dynamic-bomb-count').value = this.config.dynamicBombs;
+                        document.getElementById('bomb-interval').value = Math.floor(this.config.bombInterval / 1000);
                     }
+                } catch (e) {
+                    console.log('Нет сохраненных данных');
                 }
-                if (currentPos) break;
-            }
+            },
             
-            if (!currentPos) return;
-            
-            // Находим возможные направления
-            const directions = [
-                [-1, -1], [-1, 0], [-1, 1],
-                [0, -1],           [0, 1],
-                [1, -1],  [1, 0],  [1, 1]
-            ];
-            
-            const possibleMoves = [];
-            for (const [dr, dc] of directions) {
-                const nr = currentPos.r + dr;
-                const nc = currentPos.c + dc;
-                
-                if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols) {
-                    const cell = gameBoard[nr][nc];
-                    if (!cell.isRevealed && !cell.isFlagged && !cell.isQuestion) {
-                        possibleMoves.push({r: nr, c: nc});
+            saveGame() {
+                const gameState = {
+                    board: this.state.board,
+                    config: this.config,
+                    state: {
+                        gameOver: this.state.gameOver,
+                        gameWon: this.state.gameWon,
+                        firstClick: this.state.firstClick,
+                        flaggedCount: this.state.flaggedCount,
+                        revealedCount: this.state.revealedCount,
+                        moveHistory: this.state.moveHistory,
+                        startTime: this.state.startTime ? Date.now() - this.state.startTime : null
                     }
+                };
+                
+                localStorage.setItem('minesweeper-save', JSON.stringify(gameState));
+                this.showMessage('💾 Игра сохранена');
+            },
+            
+            // ИНТЕРФЕЙС
+            updateUI() {
+                // Счетчики
+                this.elements['mine-count'].textContent = 
+                    (this.config.mines - this.state.flaggedCount).toString().padStart(3, '0');
+                
+                this.elements['bomb-count'].textContent = this.config.dynamicBombs;
+                
+                // Статистика
+                this.elements['games-played'].textContent = this.state.statistics.gamesPlayed;
+                this.elements['games-won'].textContent = this.state.statistics.gamesWon;
+                
+                const winRate = this.state.statistics.gamesPlayed > 0
+                    ? Math.round((this.state.statistics.gamesWon / this.state.statistics.gamesPlayed) * 100)
+                    : 0;
+                this.elements['win-rate'].textContent = `${winRate}%`;
+                
+                this.elements['best-time'].textContent = 
+                    this.state.statistics.bestTime === Infinity 
+                    ? '--:--' 
+                    : this.state.statistics.bestTime.toString().padStart(3, '0');
+                
+                this.elements['total-bombs'].textContent = this.state.statistics.totalBombsAvoided;
+                this.elements['total-flags'].textContent = this.state.statistics.totalFlags;
+                
+                // Значения слайдеров
+                document.getElementById('board-size-value').textContent = 
+                    `${this.config.rows}×${this.config.cols}`;
+                document.getElementById('mine-count-value').textContent = this.config.mines;
+                document.getElementById('dynamic-bomb-count-value').textContent = this.config.dynamicBombs;
+                document.getElementById('bomb-interval-value').textContent = 
+                    `${Math.floor(this.config.bombInterval / 1000)} сек`;
+            },
+            
+            showMessage(text) {
+                // Создаем временное уведомление
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: var(--ui-bg);
+                    color: #2c3e50;
+                    padding: 15px 25px;
+                    border-radius: 12px;
+                    box-shadow: var(--ui-shadow);
+                    z-index: 10000;
+                    animation: slideInRight 0.3s ease-out;
+                    font-weight: 600;
+                `;
+                
+                notification.textContent = text;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            },
+            
+            showModal(title, content) {
+                this.elements.modalTitle.textContent = title;
+                this.elements.modalContent.innerHTML = content;
+                this.elements.modal.classList.add('active');
+            },
+            
+            closeModal() {
+                this.elements.modal.classList.remove('active');
+            },
+            
+            handleKeyPress(e) {
+                if (e.ctrlKey && e.key === 'z') {
+                    e.preventDefault();
+                    this.undoMove();
+                } else if (e.key === ' ') {
+                    e.preventDefault();
+                    this.giveHint();
+                } else if (e.key === 'Escape') {
+                    this.closeModal();
                 }
             }
-            
-            if (possibleMoves.length === 0) return;
-            
-            // Выбираем случайное направление
-            const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-            
-            // Перемещаем бомбу
-            gameBoard[currentPos.r][currentPos.c].isDynamicBomb = false;
-            gameBoard[move.r][move.c].isDynamicBomb = true;
-            
-            // Эффект волны
-            createWaveEffect(move.r, move.c);
-            
-            // Обновляем отображение
-            renderBoard();
-            
-            // Обновляем таймер бомбы
-            elements.bombTimer.textContent = (config.bombInterval / 1000).toString().padStart(2, '0');
-        }
-        
-        function createWaveEffect(row, col) {
-            const wave = document.createElement('div');
-            wave.className = 'wave-effect';
-            wave.style.left = `${col * 38}px`;
-            wave.style.top = `${row * 38}px`;
-            
-            elements.gameBoard.appendChild(wave);
-            setTimeout(() => wave.remove(), 500);
-        }
-        
-        // Обновление счетчиков
-        function updateCounters() {
-            const remainingMines = config.mines - gameState.flaggedCount;
-            elements.mineCount.textContent = remainingMines.toString().padStart(3, '0');
-        }
-        
-        // Инициализация настроек
-        function initSettings() {
-            const boardSizeSlider = document.getElementById('board-size');
-            const boardSizeValue = document.getElementById('board-size-value');
-            const mineCountSlider = document.getElementById('mine-count-range');
-            const mineCountValue = document.getElementById('mine-count-value');
-            const bombIntervalSlider = document.getElementById('bomb-interval');
-            const bombIntervalValue = document.getElementById('bomb-interval-value');
-            const dynamicBombCheckbox = document.getElementById('dynamic-bomb');
-            
-            // Обработчики слайдеров
-            boardSizeSlider.addEventListener('input', function() {
-                const size = parseInt(this.value);
-                boardSizeValue.textContent = `${size}×${size}`;
-                config.rows = size;
-                config.cols = size;
-                
-                // Обновляем максимум мин
-                const maxMines = size * size - 1;
-                mineCountSlider.max = Math.min(40, maxMines);
-                if (parseInt(mineCountSlider.value) > maxMines) {
-                    mineCountSlider.value = Math.min(10, maxMines);
-                    mineCountValue.textContent = mineCountSlider.value;
-                    config.mines = parseInt(mineCountSlider.value);
-                }
-            });
-            
-            mineCountSlider.addEventListener('input', function() {
-                mineCountValue.textContent = this.value;
-                config.mines = parseInt(this.value);
-            });
-            
-            bombIntervalSlider.addEventListener('input', function() {
-                bombIntervalValue.textContent = this.value;
-                config.bombInterval = parseInt(this.value) * 1000;
-            });
-            
-            dynamicBombCheckbox.addEventListener('change', function() {
-                config.dynamicBomb = this.checked;
-            });
-            
-            // Кнопка случайного
-            document.getElementById('random-seed').addEventListener('click', function() {
-                config.rows = Math.floor(Math.random() * 11) + 5; // 5-15
-                config.cols = config.rows;
-                config.mines = Math.floor((config.rows * config.cols) * 0.15);
-                
-                // Обновляем слайдеры
-                boardSizeSlider.value = config.rows;
-                boardSizeValue.textContent = `${config.rows}×${config.rows}`;
-                mineCountSlider.value = config.mines;
-                mineCountValue.textContent = config.mines;
-            });
-        }
-        
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM загружен, инициализация...");
-            
-            // Инициализируем настройки
-            initSettings();
-            
-            // Основная кнопка начала игры
-            elements.startGameBtn.addEventListener('click', function() {
-                console.log("Кнопка 'Начать игру' нажата");
-                initGame();
-            });
-            
-            // Кнопка на начальном экране
-            elements.startButtonMain.addEventListener('click', function() {
-                console.log("Основная кнопка начала игры нажата");
-                initGame();
-            });
-            
-            // Кнопка перезапуска
-            elements.restartBtn.addEventListener('click', function() {
-                console.log("Перезапуск игры");
-                initGame();
-            });
-            
-            // Кнопка отмены
-            document.getElementById('undo-btn').addEventListener('click', function() {
-                console.log("Отмена хода (пока не реализовано)");
-                // Реализация отмены хода будет добавлена позже
-            });
-            
-            console.log("Игра готова к запуску!");
+        };
+
+        // Запуск игры при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            game.init();
         });
+
+        // Добавляем отсутствующие анимации
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+            
+            .achievement.unlocked {
+                background: linear-gradient(145deg, #2ecc71, #27ae60) !important;
+                color: white !important;
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
