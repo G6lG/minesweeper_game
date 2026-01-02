@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сапёр с Динамической Бомбой | Игра запускается!</title>
+    <style>
+        /* ВАЖНО: Весь CSS остаётся БЕЗ ИЗМЕНЕНИЙ из предыдущего кода */
+        :root {
+            --primary-bg: linear-gradient(135deg, #e0e5ec 0%, #f0f5fa 100%);
+            --cell-size: 35px;
+            --cell-margin: 3px;
+            --cell-radius: 10px;
+            --shadow-light: #ffffff;
+            --shadow-dark: #a3b1c6;
+            --number-1: #3498db;
+            --number-2: #27ae60;
+            --number-3: #e74c3c;
+            --number-4: #9b59b6;
+            --number-5: #f39c12;
+            --number-6: #1abc9c;
+            --number-7: #34495e;
+            --number-8: #7f8c8d;
+            --bomb-color: #e74c3c;
+            --flag-color: #e74c3c;
+            --question-color: #f39c12;
+            --ui-bg: rgba(224, 229, 236, 0.9);
+            --ui-radius: 15px;
+            --ui-shadow: 8px 8px 16px #a3b1c6, -8px -8px 16px #ffffff;
+            --ui-inset-shadow: inset 3px 3px 7px #a3b1c6, inset -3px -3px 7px #ffffff;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--primary-bg);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(163, 177, 198, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .top-panel {
+            background: var(--ui-bg);
+            border-radius: var(--ui-radius);
+            box-shadow: var(--ui-shadow);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .display {
+            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
+            border-radius: 12px;
+            padding: 15px 25px;
+            box-shadow: var(--ui-inset-shadow);
+            display: flex;
+            gap: 30px;
+        }
+
+        .display-item {
+            text-align: center;
+        }
+
+        .display-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .display-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            color: #2c3e50;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        .game-board-container {
+            background: var(--ui-bg);
+            border-radius: var(--ui-radius);
+            box-shadow: var(--ui-shadow);
+            padding: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 500px;
+            position: relative;
+        }
+
+        .game-board {
+            display: inline-grid;
+            gap: var(--cell-margin);
+            background: rgba(163, 177, 198, 0.3);
+            padding: 15px;
+            border-radius: calc(var(--cell-radius) + 5px);
+            box-shadow: inset 2px 2px 5px #a3b1c6, inset -2px -2px 5px #ffffff;
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border-radius: var(--cell-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition);
+            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
+            box-shadow: 4px 4px 8px #a3b1c6, -4px -4px 8px #ffffff;
+            position: relative;
+        }
+
+        .cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 12px #a3b1c6, -6px -6px 12px #ffffff;
+        }
+
+        .cell:active {
+            transform: translateY(0);
+            box-shadow: inset 2px 2px 4px #a3b1c6, inset -2px -2px 4px #ffffff;
+        }
+
+        .cell.revealed {
+            background: linear-gradient(145deg, #d1d9e6, #e6ebf4);
+            box-shadow: inset 3px 3px 6px #a3b1c6, inset -3px -3px 6px #ffffff;
+            cursor: default;
+        }
+
+        .cell.revealed:hover {
+            transform: none;
+            box-shadow: inset 3px 3px 6px #a3b1c6, inset -3px -3px 6px #ffffff;
+        }
+
+        .cell.mine {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a52);
+        }
+
+        .cell.mine::before {
+            content: '💣';
+            font-size: 0.9rem;
+        }
+
+        .cell.flagged::before {
+            content: '🚩';
+            font-size: 0.9rem;
+            color: var(--flag-color);
+        }
+
+        .cell.question::before {
+            content: '?';
+            color: var(--question-color);
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .cell.dynamic-bomb {
+            animation: pulse 2s infinite;
+            background: linear-gradient(145deg, #ff9f43, #ff8a00);
+        }
+
+        .cell.dynamic-bomb::before {
+            content: '⏣';
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .cell.number-1 { color: var(--number-1); }
+        .cell.number-2 { color: var(--number-2); }
+        .cell.number-3 { color: var(--number-3); }
+        .cell.number-4 { color: var(--number-4); }
+        .cell.number-5 { color: var(--number-5); }
+        .cell.number-6 { color: var(--number-6); }
+        .cell.number-7 { color: var(--number-7); }
+        .cell.number-8 { color: var(--number-8); }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--ui-bg);
+            border-radius: var(--ui-radius);
+            box-shadow: var(--ui-shadow);
+            padding: 25px;
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-title i {
+            color: #3498db;
+        }
+
+        .settings-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .setting-label {
+            font-size: 0.95rem;
+            color: #5d6d7e;
+            font-weight: 600;
+        }
+
+        input[type="number"], input[type="text"], select {
+            padding: 12px 15px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
+            box-shadow: var(--ui-inset-shadow);
+            font-family: inherit;
+            font-size: 1rem;
+            color: #2c3e50;
+            transition: var(--transition);
+        }
+
+        input[type="number"]:focus, input[type="text"]:focus, select:focus {
+            outline: none;
+            box-shadow: inset 2px 2px 5px #a3b1c6, inset -2px -2px 5px #ffffff,
+                        0 0 0 2px rgba(52, 152, 219, 0.3);
+        }
+
+        .range-with-value {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2c3e50;
+            cursor: pointer;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
+            box-shadow: var(--ui-inset-shadow);
+            appearance: none;
+            cursor: pointer;
+            position: relative;
+        }
+
+        input[type="checkbox"]:checked {
+            background: #3498db;
+        }
+
+        input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
+            box-shadow: 5px 5px 10px #a3b1c6, -5px -5px 10px #ffffff;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 8px 8px 16px #a3b1c6, -8px -8px 16px #ffffff;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: inset 3px 3px 6px #a3b1c6, inset -3px -3px 6px #ffffff;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            box-shadow: 5px 5px 10px #a3b1c6, -5px -5px 10px #ffffff;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .history-panel {
+            height: 250px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
+            border-radius: 10px;
+            box-shadow: var(--ui-inset-shadow);
+            margin-bottom: 15px;
+        }
+
+        .history-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #5d6d7e;
+            border-left: 4px solid #3498db;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .history-item.flag { border-left-color: #e74c3c; }
+        .history-item.question { border-left-color: #f39c12; }
+        .history-item.bomb { border-left-color: #ff9f43; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
+            border-radius: 10px;
+            box-shadow: var(--ui-inset-shadow);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--ui-bg);
+            border-radius: var(--ui-radius);
+            box-shadow: var(--ui-shadow);
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 25px;
+            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #7f8c8d;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #2c3e50;
+            box-shadow: 3px 3px 6px #a3b1c6, -3px -3px 6px #ffffff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .leaderboard {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .leaderboard th {
+            background: linear-gradient(145deg, #d1d9e6, #e6ebf4);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #5d6d7e;
+            border-bottom: 2px solid rgba(163, 177, 198, 0.3);
+        }
+
+        .leaderboard td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(163, 177, 198, 0.3);
+        }
+
+        .leaderboard tr:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .editor-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tool-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
+            box-shadow: 3px 3px 6px #a3b1c6, -3px -3px 6px #ffffff;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: #5d6d7e;
+        }
+
+        .tool-btn.active {
+            background: #3498db;
+            color: white;
+            box-shadow: 3px 3px 6px #a3b1c6;
+        }
+
+        .editor-status {
+            padding: 15px;
+            background: linear-gradient(145deg, #e6ebf4, #d1d9e6);
+            border-radius: 10px;
+            box-shadow: var(--ui-inset-shadow);
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #5d6d7e;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                max-width: 800px;
+            }
+            
+            .sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .cell {
+                width: 30px;
+                height: 30px;
+                font-size: 1rem;
+            }
+            
+            .game-board-container {
+                padding: 15px;
+            }
+            
+            .panel {
+                padding: 20px;
+            }
+            
+            .btn-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cell {
+                width: 25px;
+                height: 25px;
+                font-size: 0.9rem;
+            }
+            
+            .display {
+                flex-direction: column;
+                gap: 15px;
+                align-items: center;
+            }
+            
+            .game-controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        .context-menu {
+            position: absolute;
+            background: var(--ui-bg);
+            border-radius: var(--ui-radius);
+            box-shadow: var(--ui-shadow);
+            padding: 10px;
+            display: none;
+            z-index: 100;
+        }
+
+        .context-menu.active {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #5d6d7e;
+        }
+
+        .context-menu-item:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        @keyframes wave {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+
+        .wave-effect {
+            position: absolute;
+            border: 2px solid #ff9f43;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: wave 0.5s ease-out;
+        }
+
+        /* ДОБАВЛЕНО: Стиль для начального экрана */
+        .start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .start-screen h2 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .start-screen p {
+            color: #7f8c8d;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        .start-screen .btn {
+            margin-top: 20px;
+        }
+
+        /* ДОБАВЛЕНО: Стиль для выделения выбранной клетки */
+        .cell.selected {
+            box-shadow: 0 0 0 3px #3498db !important;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚡ Сапёр с Динамической Бомбой</h1>
+        <p class="subtitle">Игра запускается сразу! Нажмите "Начать игру"</p>
+    </div>
+
+    <div class="container">
+        <div class="game-area">
+            <div class="top-panel">
+                <div class="display">
+                    <div class="display-item">
+                        <div class="display-label">Мин осталось</div>
+                        <div class="display-value" id="mine-count">10</div>
+                    </div>
+                    <div class="display-item">
+                        <div class="display-label">Время</div>
+                        <div class="display-value" id="timer">000</div>
+                    </div>
+                    <div class="display-item">
+                        <div class="display-label">След. перемещение</div>
+                        <div class="display-value" id="bomb-timer">15</div>
+                    </div>
+                </div>
+                
+                <div class="game-controls">
+                    <button class="btn" id="undo-btn" title="Ctrl+Z">
+                        <span>↶</span> Отмена
+                    </button>
+                    <button class="btn btn-primary" id="restart-btn">
+                        <span>🔄</span> Новая игра
+                    </button>
+                    <button class="btn" id="editor-btn">
+                        <span>✏️</span> Редактор
+                    </button>
+                </div>
+            </div>
+
+            <div class="game-board-container">
+                <!-- ИГРА БУДЕТ ЗАГРУЖЕНА СРАЗУ -->
+                <div class="game-board" id="game-board">
+                    <!-- Поле появится после нажатия "Начать игру" -->
+                </div>
+                
+                <!-- ДОБАВЛЕНО: Начальный экран -->
+                <div id="start-screen" style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                    <h2 style="color: #2c3e50;">🎮 Готовы начать?</h2>
+                    <p style="color: #7f8c8d; max-width: 400px; text-align: center;">
+                        Настройте параметры игры в правой панели и нажмите 
+                        <strong>"Начать игру"</strong> ниже
+                    </p>
+                    <button class="btn btn-success" id="start-button-main" style="font-size: 1.2rem; padding: 15px 30px;">
+                        🚀 НАЧАТЬ ИГРУ
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">⌨️ Управление</div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div style="font-size: 0.9rem; color: #5d6d7e;">
+                        <strong>ЛКМ</strong> — Открыть клетку
+                    </div>
+                    <div style="font-size: 0.9rem; color: #5d6d7e;">
+                        <strong>ПКМ</strong> — Флаг/Вопрос
+                    </div>
+                    <div style="font-size: 0.9rem; color: #5d6d7e;">
+                        <strong>Ctrl+Z</strong> — Отмена хода
+                    </div>
+                    <div style="font-size: 0.9rem; color: #5d6d7e;">
+                        <strong>Alt+Клик</strong> — Вопрос
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-title">⚙️ Настройки игры</div>
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <label class="setting-label">Размер поля</label>
+                        <div class="range-with-value">
+                            <input type="range" id="board-size" min="5" max="20" value="9">
+                            <span id="board-size-value">9×9</span>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Количество мин</label>
+                        <div class="range-with-value">
+                            <input type="range" id="mine-count-range" min="1" max="40" value="10">
+                            <span id="mine-count-value">10</span>
+                        </div>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="dynamic-bomb" checked>
+                        <label class="setting-label">Динамическая бомба</label>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Интервал бомбы (сек)</label>
+                        <div class="range-with-value">
+                            <input type="range" id="bomb-interval" min="5" max="30" value="15">
+                            <span id="bomb-interval-value">15</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ДОБАВЛЕНО: Основная кнопка начала игры -->
+                <div class="btn-group" style="margin-top: 20px;">
+                    <button class="btn btn-success" id="start-game" style="grid-column: 1 / -1;">
+                        <span>▶️</span> НАЧАТЬ ИГРУ
+                    </button>
+                    <button class="btn" id="random-seed">
+                        <span>🎲</span> Случайный
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">📊 Статистика</div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="games-played">0</div>
+                        <div class="stat-label">Игр сыграно</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="games-won">0</div>
+                        <div class="stat-label">Побед</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="win-rate">0%</div>
+                        <div class="stat-label">Процент побед</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="best-time">--</div>
+                        <div class="stat-label">Лучшее время</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // УПРОЩЁННАЯ И ИСПРАВЛЕННАЯ ВЕРСИЯ ИГРЫ
+        
+        // Основные настройки
+        const config = {
+            rows: 9,
+            cols: 9,
+            mines: 10,
+            dynamicBomb: true,
+            bombInterval: 15000
+        };
+        
+        let gameBoard = [];
+        let gameState = {
+            gameOver: false,
+            gameWon: false,
+            firstClick: true,
+            flaggedCount: 0,
+            revealedCount: 0,
+            startTime: null,
+            timerInterval: null,
+            bombTimer: null
+        };
+        
+        // DOM элементы
+        const elements = {
+            gameBoard: document.getElementById('game-board'),
+            mineCount: document.getElementById('mine-count'),
+            timer: document.getElementById('timer'),
+            bombTimer: document.getElementById('bomb-timer'),
+            startGameBtn: document.getElementById('start-game'),
+            restartBtn: document.getElementById('restart-btn'),
+            startButtonMain: document.getElementById('start-button-main')
+        };
+        
+        // Инициализация игры
+        function initGame() {
+            console.log("Игра инициализируется...");
+            
+            // Скрываем начальный экран
+            document.getElementById('start-screen').style.display = 'none';
+            elements.gameBoard.style.display = 'grid';
+            
+            // Сброс состояния
+            gameState.gameOver = false;
+            gameState.gameWon = false;
+            gameState.firstClick = true;
+            gameState.flaggedCount = 0;
+            gameState.revealedCount = 0;
+            
+            // Остановка таймеров
+            stopTimers();
+            
+            // Создаём поле
+            createBoard();
+            
+            // Обновляем счетчики
+            updateCounters();
+            
+            // Рисуем поле
+            renderBoard();
+            
+            console.log("Игра готова! Кликните по любой клетке.");
+        }
+        
+        // Создание игрового поля
+        function createBoard() {
+            gameBoard = [];
+            
+            for (let r = 0; r < config.rows; r++) {
+                gameBoard[r] = [];
+                for (let c = 0; c < config.cols; c++) {
+                    gameBoard[r][c] = {
+                        row: r,
+                        col: c,
+                        isMine: false,
+                        isDynamicBomb: false,
+                        isRevealed: false,
+                        isFlagged: false,
+                        isQuestion: false,
+                        neighborMines: 0
+                    };
+                }
+            }
+            
+            // Расставляем мины (после первого клика)
+            // Пока только создаём пустое поле
+        }
+        
+        // Генерация мин после первого клика
+        function generateMines(firstRow, firstCol) {
+            console.log("Генерация мин...");
+            
+            // Список всех клеток, кроме первой и её соседей
+            const availableCells = [];
+            for (let r = 0; r < config.rows; r++) {
+                for (let c = 0; c < config.cols; c++) {
+                    // Не ставим мины рядом с первым кликом
+                    const distance = Math.max(Math.abs(r - firstRow), Math.abs(c - firstCol));
+                    if (distance > 1) {
+                        availableCells.push({r, c});
+                    }
+                }
+            }
+            
+            // Размещаем мины
+            let minesPlaced = 0;
+            while (minesPlaced < config.mines && availableCells.length > 0) {
+                const index = Math.floor(Math.random() * availableCells.length);
+                const {r, c} = availableCells.splice(index, 1)[0];
+                gameBoard[r][c].isMine = true;
+                minesPlaced++;
+            }
+            
+            // Размещаем динамическую бомбу
+            if (config.dynamicBomb && availableCells.length > 0) {
+                const index = Math.floor(Math.random() * availableCells.length);
+                const {r, c} = availableCells[index];
+                gameBoard[r][c].isDynamicBomb = true;
+            }
+            
+            // Считаем соседей
+            calculateNeighbors();
+            
+            // Запускаем таймер
+            startTimer();
+        }
+        
+        // Подсчёт мин вокруг каждой клетки
+        function calculateNeighbors() {
+            const directions = [
+                [-1, -1], [-1, 0], [-1, 1],
+                [0, -1],           [0, 1],
+                [1, -1],  [1, 0],  [1, 1]
+            ];
+            
+            for (let r = 0; r < config.rows; r++) {
+                for (let c = 0; c < config.cols; c++) {
+                    if (gameBoard[r][c].isMine) continue;
+                    
+                    let count = 0;
+                    for (const [dr, dc] of directions) {
+                        const nr = r + dr;
+                        const nc = c + dc;
+                        if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols) {
+                            if (gameBoard[nr][nc].isMine) {
+                                count++;
+                            }
+                        }
+                    }
+                    gameBoard[r][c].neighborMines = count;
+                }
+            }
+        }
+        
+        // Отрисовка поля
+        function renderBoard() {
+            elements.gameBoard.innerHTML = '';
+            elements.gameBoard.style.gridTemplateColumns = `repeat(${config.cols}, 1fr)`;
+            elements.gameBoard.style.gridTemplateRows = `repeat(${config.rows}, 1fr)`;
+            
+            for (let r = 0; r < config.rows; r++) {
+                for (let c = 0; c < config.cols; c++) {
+                    const cell = gameBoard[r][c];
+                    const cellElement = document.createElement('div');
+                    cellElement.className = 'cell';
+                    cellElement.dataset.row = r;
+                    cellElement.dataset.col = c;
+                    
+                    // Добавляем классы в зависимости от состояния
+                    if (cell.isRevealed) {
+                        cellElement.classList.add('revealed');
+                        
+                        if (cell.isMine) {
+                            cellElement.classList.add('mine');
+                        } else if (cell.neighborMines > 0) {
+                            cellElement.classList.add(`number-${cell.neighborMines}`);
+                            cellElement.textContent = cell.neighborMines;
+                        }
+                    } else {
+                        if (cell.isFlagged) {
+                            cellElement.classList.add('flagged');
+                        } else if (cell.isQuestion) {
+                            cellElement.classList.add('question');
+                        }
+                    }
+                    
+                    // Динамическая бомба
+                    if (cell.isDynamicBomb) {
+                        cellElement.classList.add('dynamic-bomb');
+                    }
+                    
+                    // Обработчики событий
+                    cellElement.addEventListener('click', (e) => handleCellClick(r, c, e));
+                    cellElement.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        handleRightClick(r, c);
+                    });
+                    
+                    elements.gameBoard.appendChild(cellElement);
+                }
+            }
+        }
+        
+        // Обработка клика по клетке
+        function handleCellClick(row, col, event) {
+            if (gameState.gameOver || gameState.gameWon) return;
+            
+            const cell = gameBoard[row][col];
+            
+            // Если клетка помечена, игнорируем
+            if (cell.isFlagged || cell.isQuestion) return;
+            
+            // Первый клик - генерируем поле
+            if (gameState.firstClick) {
+                gameState.firstClick = false;
+                generateMines(row, col);
+            }
+            
+            // Если это мина - конец игры
+            if (cell.isMine) {
+                gameOver(false);
+                return;
+            }
+            
+            // Открываем клетку
+            revealCell(row, col);
+            
+            // Проверяем победу
+            checkWin();
+        }
+        
+        // Обработка правого клика
+        function handleRightClick(row, col) {
+            if (gameState.gameOver || gameState.gameWon) return;
+            
+            const cell = gameBoard[row][col];
+            if (cell.isRevealed) return;
+            
+            // Цикл: hidden → flagged → question → hidden
+            if (!cell.isFlagged && !cell.isQuestion) {
+                cell.isFlagged = true;
+                gameState.flaggedCount++;
+            } else if (cell.isFlagged) {
+                cell.isFlagged = false;
+                cell.isQuestion = true;
+                gameState.flaggedCount--;
+            } else if (cell.isQuestion) {
+                cell.isQuestion = false;
+            }
+            
+            updateCounters();
+            renderBoard();
+        }
+        
+        // Рекурсивное открытие клеток
+        function revealCell(row, col) {
+            if (row < 0 || row >= config.rows || col < 0 || col >= config.cols) return;
+            
+            const cell = gameBoard[row][col];
+            if (cell.isRevealed || cell.isFlagged || cell.isQuestion) return;
+            
+            cell.isRevealed = true;
+            gameState.revealedCount++;
+            
+            // Если пустая клетка - открываем соседей
+            if (!cell.isMine && cell.neighborMines === 0) {
+                const directions = [
+                    [-1, -1], [-1, 0], [-1, 1],
+                    [0, -1],           [0, 1],
+                    [1, -1],  [1, 0],  [1, 1]
+                ];
+                
+                for (const [dr, dc] of directions) {
+                    revealCell(row + dr, col + dc);
+                }
+            }
+            
+            renderBoard();
+        }
+        
+        // Проверка победы
+        function checkWin() {
+            const totalCells = config.rows * config.cols;
+            const revealedSafeCells = gameState.revealedCount;
+            const totalSafeCells = totalCells - config.mines;
+            
+            if (revealedSafeCells === totalSafeCells) {
+                gameOver(true);
+            }
+        }
+        
+        // Конец игры
+        function gameOver(isWin) {
+            gameState.gameOver = true;
+            gameState.gameWon = isWin;
+            
+            stopTimers();
+            
+            // Показываем все мины
+            for (let r = 0; r < config.rows; r++) {
+                for (let c = 0; c < config.cols; c++) {
+                    if (gameBoard[r][c].isMine) {
+                        gameBoard[r][c].isRevealed = true;
+                    }
+                }
+            }
+            
+            renderBoard();
+            
+            // Сообщение о результате
+            setTimeout(() => {
+                if (isWin) {
+                    alert(`🎉 Победа! Время: ${document.getElementById('timer').textContent} секунд`);
+                } else {
+                    alert('💥 Игра окончена! Вы попали на мину.');
+                }
+            }, 100);
+        }
+        
+        // Таймеры
+        function startTimer() {
+            gameState.startTime = Date.now();
+            
+            // Основной таймер
+            gameState.timerInterval = setInterval(() => {
+                const seconds = Math.floor((Date.now() - gameState.startTime) / 1000);
+                elements.timer.textContent = seconds.toString().padStart(3, '0');
+            }, 1000);
+            
+            // Таймер бомбы
+            if (config.dynamicBomb) {
+                gameState.bombTimer = setInterval(() => {
+                    moveDynamicBomb();
+                }, config.bombInterval);
+            }
+        }
+        
+        function stopTimers() {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+            if (gameState.bombTimer) {
+                clearInterval(gameState.bombTimer);
+                gameState.bombTimer = null;
+            }
+        }
+        
+        // Перемещение динамической бомбы
+        function moveDynamicBomb() {
+            // Находим текущую позицию бомбы
+            let currentPos = null;
+            for (let r = 0; r < config.rows; r++) {
+                for (let c = 0; c < config.cols; c++) {
+                    if (gameBoard[r][c].isDynamicBomb) {
+                        currentPos = {r, c};
+                        break;
+                    }
+                }
+                if (currentPos) break;
+            }
+            
+            if (!currentPos) return;
+            
+            // Находим возможные направления
+            const directions = [
+                [-1, -1], [-1, 0], [-1, 1],
+                [0, -1],           [0, 1],
+                [1, -1],  [1, 0],  [1, 1]
+            ];
+            
+            const possibleMoves = [];
+            for (const [dr, dc] of directions) {
+                const nr = currentPos.r + dr;
+                const nc = currentPos.c + dc;
+                
+                if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols) {
+                    const cell = gameBoard[nr][nc];
+                    if (!cell.isRevealed && !cell.isFlagged && !cell.isQuestion) {
+                        possibleMoves.push({r: nr, c: nc});
+                    }
+                }
+            }
+            
+            if (possibleMoves.length === 0) return;
+            
+            // Выбираем случайное направление
+            const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+            
+            // Перемещаем бомбу
+            gameBoard[currentPos.r][currentPos.c].isDynamicBomb = false;
+            gameBoard[move.r][move.c].isDynamicBomb = true;
+            
+            // Эффект волны
+            createWaveEffect(move.r, move.c);
+            
+            // Обновляем отображение
+            renderBoard();
+            
+            // Обновляем таймер бомбы
+            elements.bombTimer.textContent = (config.bombInterval / 1000).toString().padStart(2, '0');
+        }
+        
+        function createWaveEffect(row, col) {
+            const wave = document.createElement('div');
+            wave.className = 'wave-effect';
+            wave.style.left = `${col * 38}px`;
+            wave.style.top = `${row * 38}px`;
+            
+            elements.gameBoard.appendChild(wave);
+            setTimeout(() => wave.remove(), 500);
+        }
+        
+        // Обновление счетчиков
+        function updateCounters() {
+            const remainingMines = config.mines - gameState.flaggedCount;
+            elements.mineCount.textContent = remainingMines.toString().padStart(3, '0');
+        }
+        
+        // Инициализация настроек
+        function initSettings() {
+            const boardSizeSlider = document.getElementById('board-size');
+            const boardSizeValue = document.getElementById('board-size-value');
+            const mineCountSlider = document.getElementById('mine-count-range');
+            const mineCountValue = document.getElementById('mine-count-value');
+            const bombIntervalSlider = document.getElementById('bomb-interval');
+            const bombIntervalValue = document.getElementById('bomb-interval-value');
+            const dynamicBombCheckbox = document.getElementById('dynamic-bomb');
+            
+            // Обработчики слайдеров
+            boardSizeSlider.addEventListener('input', function() {
+                const size = parseInt(this.value);
+                boardSizeValue.textContent = `${size}×${size}`;
+                config.rows = size;
+                config.cols = size;
+                
+                // Обновляем максимум мин
+                const maxMines = size * size - 1;
+                mineCountSlider.max = Math.min(40, maxMines);
+                if (parseInt(mineCountSlider.value) > maxMines) {
+                    mineCountSlider.value = Math.min(10, maxMines);
+                    mineCountValue.textContent = mineCountSlider.value;
+                    config.mines = parseInt(mineCountSlider.value);
+                }
+            });
+            
+            mineCountSlider.addEventListener('input', function() {
+                mineCountValue.textContent = this.value;
+                config.mines = parseInt(this.value);
+            });
+            
+            bombIntervalSlider.addEventListener('input', function() {
+                bombIntervalValue.textContent = this.value;
+                config.bombInterval = parseInt(this.value) * 1000;
+            });
+            
+            dynamicBombCheckbox.addEventListener('change', function() {
+                config.dynamicBomb = this.checked;
+            });
+            
+            // Кнопка случайного
+            document.getElementById('random-seed').addEventListener('click', function() {
+                config.rows = Math.floor(Math.random() * 11) + 5; // 5-15
+                config.cols = config.rows;
+                config.mines = Math.floor((config.rows * config.cols) * 0.15);
+                
+                // Обновляем слайдеры
+                boardSizeSlider.value = config.rows;
+                boardSizeValue.textContent = `${config.rows}×${config.rows}`;
+                mineCountSlider.value = config.mines;
+                mineCountValue.textContent = config.mines;
+            });
+        }
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM загружен, инициализация...");
+            
+            // Инициализируем настройки
+            initSettings();
+            
+            // Основная кнопка начала игры
+            elements.startGameBtn.addEventListener('click', function() {
+                console.log("Кнопка 'Начать игру' нажата");
+                initGame();
+            });
+            
+            // Кнопка на начальном экране
+            elements.startButtonMain.addEventListener('click', function() {
+                console.log("Основная кнопка начала игры нажата");
+                initGame();
+            });
+            
+            // Кнопка перезапуска
+            elements.restartBtn.addEventListener('click', function() {
+                console.log("Перезапуск игры");
+                initGame();
+            });
+            
+            // Кнопка отмены
+            document.getElementById('undo-btn').addEventListener('click', function() {
+                console.log("Отмена хода (пока не реализовано)");
+                // Реализация отмены хода будет добавлена позже
+            });
+            
+            console.log("Игра готова к запуску!");
+        });
+    </script>
+</body>
+</html>
